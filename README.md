@@ -145,17 +145,17 @@ PopPhased \
 #### Collapse RFMix output into TRACTS-compatible bed files ####
 After running RFMix, I always collapse the output into bed files and generate karyogram plots to ensure that there weren't upstream issues, such as class file errors, phasing technical artifacts, sample mixups, etc. I wrote a script to do this, which can be run for example as follows:
 ```
-for POP in PEL; do qsub -b y -w e -e /home/armartin/rare/chip_collab/admixed/affy6/rfmix_logs -o /home/armartin/rare/chip_collab/admixed/affy6/rfmix_logs -N RFMix_collapse "module load python; python /home/armartin/rare/chip_collab/scripts/collapse_ancestry.py \
---rfmix /home/armartin/rare/chip_collab/admixed/affy6/rfmix_output/${POP}/ \
---snp_locations /home/armartin/rare/chip_collab/admixed/affy6/rfmix_input/${POP}/${POP}_chr \
---admixed_pop ${POP}_3 \
---vit 5 \
---pop_labels AFR,EUR,NAT \
+for POP in ACB ASW CLM MXL PEL PUR; do sed '1,143d' /home/armartin/rare/chip_collab/admixed/affy6/rfmix_input/${POP}/${POP}.sample | while read line; do qsub -b y -w e -e /home/armartin/rare/chip_collab/admixed/affy6/rfmix_logs -o /home/armartin/rare/chip_collab/admixed/affy6/rfmix_logs -N RFMix_collapse "module load python; python /home/armartin/rare/chip_collab/admixed/affy6/scripts/ancestry_pipeline/collapse_ancestry.py \
+--rfmix /home/armartin/rare/chip_collab/admixed/affy6/rfmix_output/${POP}/${POP}_3_chrX.rfmix.5.Viterbi.txt \
+--snp_locations /home/armartin/rare/chip_collab/admixed/affy6/rfmix_input/${POP}/${POP}_chrX.snp_locations \
+--fbk /home/armartin/rare/chip_collab/admixed/affy6/rfmix_output/${POP}/${POP}_3_chrX.rfmix.5.ForwardBackward.txt \
+--fbk_threshold 0.9 \
+--ind ${line} \
 --ind_info /home/armartin/rare/chip_collab/admixed/affy6/rfmix_input/${POP}/${POP}.sample \
---out /home/armartin/rare/chip_collab/admixed/affy6/lai_output/${POP}/seq/"; done
+--pop_labels AFR,EUR,NAT \
+--chrX \
+--out /home/armartin/rare/chip_collab/admixed/affy6/lai_output/${POP}/PopPhased/${line}"; done; done
 ```
-To do's for this script:
-* Fix this script so that it runs in parallel per individual, especially since it takes ~5 minutes/individual with the forwardbackward information from RFMix incorporated. Also allow flexibility about whether the forwardbackward information can be included or not, since thresholding on an unknown posterior probability could potentially cause some issues downstream for some application (i.e. TRACTS, where shorted tract lengths lead to a misspecified model), but not for others (i.e. admixture mapping).
 
 #### Posthoc bed file filter (OPTIONAL) ####
 After the first bed file is created, it might be desirable to mask certain regions, for example if a particular region is shown to be frequently misspecified empirically in the reference panel. I have only used this script once, so it almost assuredly has some bugs, but I have provided it here as a starting point in case posthoc masking is a desirable feature. An example run is as follows:
