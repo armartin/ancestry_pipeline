@@ -99,14 +99,9 @@ def find_haplotype_bounds(index, add, pop_order, hap):
       else:
         #we've reached the end of a region. Need to print.
         if last_anc_pos_cm[0] == -9:
-          print (str(chr) + '\t' + post_anc_pos_cm[1] + '\t' + last_anc_pos_cm[1] +
-                    '\tUNK\t' + post_anc_pos_cm[2] + '\t' + last_anc_pos_cm[2] + '\n')
           hap.write(str(chr) + '\t' + post_anc_pos_cm[1] + '\t' + last_anc_pos_cm[1] +
                     '\tUNK\t' + post_anc_pos_cm[2] + '\t' + last_anc_pos_cm[2] + '\n')
         else:
-          print (str(chr) + '\t' + post_anc_pos_cm[1] + '\t' + last_anc_pos_cm[1] + '\t' +
-                    pop_order[int(last_anc_pos_cm[0])-1] + '\t' +
-                    post_anc_pos_cm[2] + '\t' + last_anc_pos_cm[2] + '\n')
           hap.write(str(chr) + '\t' + post_anc_pos_cm[1] + '\t' + last_anc_pos_cm[1] + '\t' +
                     pop_order[int(last_anc_pos_cm[0])-1] + '\t' +
                     post_anc_pos_cm[2] + '\t' + last_anc_pos_cm[2] + '\n')
