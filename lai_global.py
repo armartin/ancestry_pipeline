@@ -1,3 +1,4 @@
+__author__ = 'armartin'
 from optparse import  OptionParser
 
 def splitstr(option, opt, value, parser):
@@ -11,9 +12,9 @@ lai_global.py   --bed_list
 """
 parser = OptionParser(USAGE)
 
-parser.add_option('--bed_list', default='/Users/alicia/Dropbox/Manuscripts/Imputation_remix/1kG_phase3_LAI/affy6_window05/integrated/PopPhased/bed_list_ACB.txt')
-parser.add_option('--ind_list', default='/Users/alicia/Dropbox/Manuscripts/Imputation_remix/1kG_phase3_LAI/affy6_window05/integrated/PopPhased/ACB.inds')
-parser.add_option('--pops', default=['AFR','EUR','NAT'], type='string', action='callback', callback=splitstr,
+parser.add_option('--bed_list')
+parser.add_option('--ind_list')
+parser.add_option('--pops', default=['AFR','EUR','NAT','UNK'], type='string', action='callback', callback=splitstr,
                   help='comma-separated list of population labels in the order of rfmix populations (1 first, 2 second, and so on). Used in bed files and karyogram labels')
 parser.add_option('--out')
 
@@ -43,4 +44,4 @@ for line in bed_list:
     out.write(ind + '\t' + '\t'.join(map(str, [round(i/sum(lai_props), 4) for i in lai_props])) + '\n')
     lai_props = [0]*len(pops)
         
-#print lai_props
+out.close()
