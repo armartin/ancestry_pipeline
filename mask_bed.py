@@ -68,17 +68,6 @@ for line in mask:
     line = line.strip().split()
     mask_dict[line[0]][int(line[1])] = line
 
-print mask_dict
-
-print 'dict test'
-for mask_start in mask_dict:
-    print mask_start
-    for mask in mask_dict[mask_start]:
-        print mask
-    
-
-print 'starting'
-
 last_chr = 0
 out = open(options.out, 'w')
 while True:
@@ -88,41 +77,33 @@ while True:
         current_chr = int(line[0])
     except ValueError:
         current_chr = 23
-    print line
     if line[0] in mask_dict:
-        #print mask_dict[line[0]]
         for mask_start in mask_dict[line[0]]:
-            print line[0] + ' ' + str(mask_start)
             #mask is the same tract
             if int(line[1]) == mask_start and int(line[2]) == int(mask_dict[line[0]][mask_start][2]):
                 out.write('\t'.join(mask_dict[line[0]][mask_start]) + '\n')
             #mask is within a single tract
             elif int(line[1]) <= mask_start and int(line[2]) >= int(mask_dict[line[0]][mask_start][2]):
-                print 'splitting'
-                tract1 = list(line)
-                tract1[2] = str(mask_start-1)
-                tract1[5] = mask_dict[line[0]][mask_start][4]
-                tract2 = list(line)
-                tract2[1] = str(int(mask_dict[line[0]][mask_start][2])+1)
-                tract2[4] = mask_dict[line[0]][mask_start][5]
-                tract2[5] = line[5]
-                print '\t'.join(tract1)
-                print '\t'.join(mask_dict[line[0]][mask_start])
-                print '\t'.join(tract2)
-                out.write('\t'.join(tract1) + '\n')
-                out.write('\t'.join(mask_dict[line[0]][mask_start]) + '\n')
-                out.write('\t'.join(tract2) + '\n')
-            #mask is within two tracts
-            elif int(line[1]) <= mask_start and int(line[2]) <= int(mask_dict[line[0]][mask_start][2]) and int(line[2]) >= mask_start:
-                print 'two tracts'
                 if int(line[1]) != mask_start:
                     tract1 = list(line)
                     tract1[2] = str(mask_start-1)
                     tract1[5] = mask_dict[line[0]][mask_start][4]
                     out.write('\t'.join(tract1) + '\n')
-                    print tract1
+                out.write('\t'.join(mask_dict[line[0]][mask_start]) + '\n')
+                if int(line[2]) != mask_dict[line[0]][mask_start][5]:
+                    tract2 = list(line)
+                    tract2[1] = str(int(mask_dict[line[0]][mask_start][2])+1)
+                    tract2[4] = mask_dict[line[0]][mask_start][5]
+                    tract2[5] = line[5]
+                    out.write('\t'.join(tract2) + '\n')
+            #mask is within two tracts
+            elif int(line[1]) <= mask_start and int(line[2]) <= int(mask_dict[line[0]][mask_start][2]) and int(line[2]) >= mask_start:
+                if int(line[1]) != mask_start:
+                    tract1 = list(line)
+                    tract1[2] = str(mask_start-1)
+                    tract1[5] = mask_dict[line[0]][mask_start][4]
+                    out.write('\t'.join(tract1) + '\n')
                     #otherwise no tract 1 because mask subsumes it
-                print mask_dict[line[0]][mask_start]
                 out.write('\t'.join(mask_dict[line[0]][mask_start]) + '\n')
                 line = bed.readline().strip().split() #get the next tract
                 if int(line[2]) != mask_dict[line[0]][mask_start][5]:
@@ -130,17 +111,17 @@ while True:
                     tract2[1] = str(int(mask_dict[line[0]][mask_start][2])+1)
                     tract2[4] = mask_dict[line[0]][mask_start][5]
                     tract2[5] = line[5]
-                    print tract2
                     out.write('\t'.join(tract2) + '\n')
                     #otherwise no tract 2 because mask subsumes it
             elif last_chr != current_chr and int(line[1]) > mask_start and int(line[1]) < mask_dict[line[0]][mask_start][2]:
-                print 'beginning ' + str(mask_start) + ' ' + mask_dict[line[0]][mask_start][2]
-                print '\t'.join(mask_dict[line[0]][mask_start])
                 out.write('\t'.join(mask_dict[line[0]][mask_start]) + '\n')
-                out.write('\t'.join(line) + '\n')
+                if len(mask_dict[line[0]]) > 1:
+                    continue
+                else:
+                    out.write('\t'.join(line) + '\n')
             #elif last_chr != current_chr and int(line[1]) > mask_start and int(line[1]) > mask_dict[line[0]][mask_start][2]:
             #    print 'beginning2 ' + str(mask_start) + ' ' + mask_dict[line[0]][mask_start][2]
-            else:
+            else: #not within mask
                 out.write('\t'.join(line) + '\n')
             #tract ends in middle of mask
             last_chr = current_chr
