@@ -9,8 +9,8 @@ This repo gives information about how to run through phasing, local ancestry inf
 * Overview
 * SHAPEIT2 check
 * SHAPEIT2 phasing
+* Make RFMix input
 
-Make RFMix input
 ##### 1.) Infer local ancestry #####
   * Run RFMix
 
