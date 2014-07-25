@@ -34,11 +34,11 @@ for line in bed_list:
     bed_b = open(line[1])
     for tract in bed_a:
       tract = tract.strip().split()
-      if tract[3] in pops: #this excludes UNK and stuff not listed in pops
+      if tract[3] in pops: #this excludes stuff not listed in pops
         lai_props[pops.index(tract[3])] += (float(tract[5]) - float(tract[4]))
     for tract in bed_b:
       tract = tract.strip().split()
-      if tract[3] in pops: #this excludes UNK and stuff not listed in pops
+      if tract[3] in pops: #this excludes stuff not listed in pops
         lai_props[pops.index(tract[3])] += (float(tract[5]) - float(tract[4]))
     
     out.write(ind + '\t' + '\t'.join(map(str, [round(i/sum(lai_props), 4) for i in lai_props])) + '\n')
