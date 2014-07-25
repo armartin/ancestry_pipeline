@@ -1,3 +1,4 @@
+__author__ = 'armartin'
 from optparse import  OptionParser
 import matplotlib.pyplot as plt
 import pylab
@@ -21,6 +22,7 @@ parser = OptionParser(USAGE)
 parser.add_option('--bed_a', default='/Users/alicia/Dropbox/Shared/SA_Phenotypes/Ancestry/RFMix_LocalAncestry/CEU_LWK_SAN/rfmix1.5.4/550/bed_files/SA006_A.bed')
 parser.add_option('--bed_b', default='/Users/alicia/Dropbox/Shared/SA_Phenotypes/Ancestry/RFMix_LocalAncestry/CEU_LWK_SAN/rfmix1.5.4/550/bed_files/SA006_B.bed')
 parser.add_option('--ind', default=None)
+parser.add_option('--chrX', help='include chrX?', default=False, action="store_true")
 parser.add_option('--centromeres', default='/home/armartin/rare/chip_collab/admixed/affy6/lai_output/centromeres.bed')
 parser.add_option('--pop_order', default=['AFR','EUR','NAT'], type='string', action='callback', callback=splitstr,
                   help='comma-separated list of population labels in the order of rfmix populations (1 first, 2 second, and so on). Used in bed files and karyogram labels')
@@ -28,7 +30,7 @@ parser.add_option('--out')
 
 (options, args) = parser.parse_args()
 
-def plot_rects(anc, chr, start, stop, hap, pop_order, colors):    
+def plot_rects(anc, chr, start, stop, hap, pop_order, colors, chrX):    
     centro_coords = map(float, centromeres[str(chr)])
     if len(centro_coords) == 3: #acrocentric chromosome
         mask = [
@@ -108,26 +110,14 @@ def plot_rects(anc, chr, start, stop, hap, pop_order, colors):
     ]
     
     clip_path = Path(verts, codes)
-    #path2 = Path(verts2, codes)
-    if anc != 'UNK' and anc != 'LCR':
+    if anc in pop_order:
         col=mcol.PathCollection([clip_path],facecolor=colors[pop_order.index(anc)], linewidths=0)
-        #patch = patches.PathPatch(path, color=colors[pop_order.index(anc)], lw=0)
-    elif anc == 'UNK':
-        col=mcol.PathCollection([clip_path],facecolor=colors[-2], linewidths=0)
-        #patch = patches.PathPatch(path, color=colors[-2], lw=0)
     else:
         col=mcol.PathCollection([clip_path],facecolor=colors[-1], linewidths=0)
-        #patch = patches.PathPatch(path, color=colors[-1], lw=0)
-    #####get rid of if later
     if 'clip_mask' in locals():
         col.set_clip_path(clip_mask, ax.transData)
     ax.add_collection(col)
-    #ax.add_patch(patch)
-    #if last_anc[1] != -9:
-    #    patch = patches.PathPatch(path2, color=colors[int(last_anc[1])-1], lw=0)
-    #else:
-    #    patch = patches.PathPatch(path2, color=colors[-1], lw=0)
-    #ax.add_patch(patch)
+
 
 #read in bed files and get individual name
 bed_a = open(options.bed_a)
@@ -142,42 +132,57 @@ else:
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.set_xlim(-5,300)
-ax.set_ylim(23,0)
+chrX = options.chrX
+if chrX:
+  ax.set_ylim(24,0)
+else:
+  ax.set_ylim(23,0)
 plt.xlabel('Genetic position (cM)')
 plt.ylabel('Chromosome')
 plt.title(ind)
-plt.yticks(range(1,23))
+if options.chrX:
+  plt.yticks(range(1,24))
+  yticks = range(1,23)
+  yticks.append('X')
+  ax.set_yticklabels(yticks)
+else:
+  plt.yticks(range(1,23))
 
 #define colors
 bmap = brewer2mpl.get_map('Set1', 'qualitative', 4)
 colors=bmap.mpl_colors
 colors.append((0,0,0))
-colors.append('0.75')
 
 #define centromeres
 centro = open(options.centromeres)
 centromeres = {}
 for line in centro:
     line = line.strip().split()
+    if chrX and line[0] == 'X':
+      line[0] = '23'
     centromeres[line[0]] = line
 
 #plot rectangles
 for line in bed_a:
     line = line.strip().split()
-    plot_rects(line[3], int(line[0]), line[4], line[5], 'A', pop_order, colors)
+    try:
+      plot_rects(line[3], int(line[0]), line[4], line[5], 'A', pop_order, colors, chrX)
+    except ValueError: #flexibility for chrX
+      plot_rects(line[3], 23, line[4], line[5], 'A', pop_order, colors, chrX)
 for line in bed_b:
     line = line.strip().split()
-    plot_rects(line[3], int(line[0]), line[4], line[5], 'B', pop_order, colors)
+    try:
+      plot_rects(line[3], int(line[0]), line[4], line[5], 'B', pop_order, colors, chrX)
+    except ValueError: #flexibility for chrX
+      plot_rects(line[3], 23, line[4], line[5], 'B', pop_order, colors, chrX)
 
 #write a legend
 p = []
 for i in range(len(pop_order)):
     p.append(plt.Rectangle((0, 0), 1, 1, color=colors[i]))
 p.append(plt.Rectangle((0, 0), 1, 1, color='k'))
-#p.append(plt.Rectangle((0, 0), 1, 1, color='0.75'))
 labs = list(pop_order)
-labs.append('UNK (Prob < 0.9)')
-#labs.append('LCR')
+labs.append('UNK')
 leg = ax.legend(p, labs, loc=4, fancybox=True)
 leg.get_frame().set_alpha(0)
 

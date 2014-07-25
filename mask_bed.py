@@ -1,3 +1,4 @@
+__author__ = 'armartin'
 from optparse import  OptionParser
 from collections import defaultdict, OrderedDict, Callable
 
@@ -127,3 +128,4 @@ while True:
             last_chr = current_chr
     else:
         out.write('\t'.join(line) + '\n')
+out.close()
