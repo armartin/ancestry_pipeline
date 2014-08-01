@@ -5,6 +5,7 @@ from datetime import datetime
 import time
 from optparse import  OptionParser
 from itertools import izip_longest
+import gzip
 import re
 
 def parse_options():
