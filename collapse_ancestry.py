@@ -57,7 +57,11 @@ def find_haplotype_bounds(index, add, pop_order, hap):
     print str(chr) + ' [' + datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S') + ']'
     rfmix = open(re.sub(r'chr[X0-9]+', 'chr' + str(chr), options.rfmix))
     if options.fbk is not None:
-      fbk = open(re.sub(r'chr[X0-9]+', 'chr' + str(chr), options.fbk))
+      fbk_file = re.sub(r'chr[X0-9]+', 'chr' + str(chr), options.fbk)
+      if fbk_file.endswith('gz'):
+        fbk = gzip.open(fbk_file)
+      else:
+        fbk = open(fbk_file)
     snp_file = re.sub(r'chr[X0-9]+', 'chr' + str(chr), options.snp_locations)
     snp_locations = open(snp_file)
     snp_map = open(snp_file.replace('snp_locations', 'map')) #map of physical position -> genetic position
