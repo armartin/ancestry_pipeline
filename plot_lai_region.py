@@ -61,6 +61,9 @@ for indiv in pheno_dict:
         dicbedsA[indiv]=bedparser.bed(ind_paths[indiv]+'_A.bed')
         dicbedsB[indiv]=bedparser.bed(ind_paths[indiv]+'_B.bed')
 
+#gets individuals with both genotype and phenotype data
+pheno_geno = set(pheno_dict.keys()).intersection(set(dicbedsA.keys()))
+
 #get tract indices for most 5' positions. for each individual, store a list of start index and end indices
 pos = options.position
 tract_A = {}
@@ -75,10 +78,14 @@ for ind in pheno_dict:
 #sort individuals by phenotype
 sorted_phenos = sorted(pheno_dict.iteritems(), key=operator.itemgetter(1))
 print sorted_phenos
+print len(sorted_phenos)
+
+print tract_A['SA1000']
+print dicbedsA[ind].chrstarts[pos[0]]
 
 #define plotting space
 brewer_vec = brewer2mpl.get_map('Set1', 'qualitative', 3).hex_colors
-brewer_vec = {'CEU': brewer_vec[0], 'LWK': brewer_vec[1], 'SAN': brewer_vec[2], 'UNK': 'black'}
+brewer_vec = {'CEU': brewer_vec[0], 'LWK': brewer_vec[1], 'SAN': brewer_vec[2], 'UNK': 'k'}
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
@@ -87,22 +94,67 @@ ax.set_ylim(len(pheno_dict.keys())*2,0)
 plt.xlabel('Physical position (Mb)')
 plt.ylabel('Haplotype (ordered by increasing ' + options.pheno_col + ')')
 plt.title(options.title)
-#plt.yticks(range(1,23))
+plt.yticks(range(len(pheno_dict.keys())*2,0))
 
 ##plot rectangles
-#for line in bed_a:
-#    line = line.strip().split()
-#    try:
-#      plot_rects(line[3], int(line[0]), line[4], line[5], 'A', pop_order, colors, chrX)
-#    except ValueError: #flexibility for chrX
-#      plot_rects(line[3], 23, line[4], line[5], 'A', pop_order, colors, chrX)
-#for line in bed_b:
-#    line = line.strip().split()
-#    try:
-#      plot_rects(line[3], int(line[0]), line[4], line[5], 'B', pop_order, colors, chrX)
-#    except ValueError: #flexibility for chrX
-#      plot_rects(line[3], 23, line[4], line[5], 'B', pop_order, colors, chrX)
+def plot_rects(bottom, left, top, right, color):
+    codes = [
+        Path.MOVETO,
+        Path.LINETO,
+        Path.LINETO,
+        Path.LINETO,
+        Path.CLOSEPOLY,
+    ]
+    
+    verts = [
+            (left, bottom), #left, bottom
+            (left, top), #left, top
+            (right, top), #right, top
+            (right, bottom), #right, bottom
+            (0, 0), #ignored
+    ]
+    
+    clip_path = Path(verts, codes)
+    col=mcol.PathCollection([clip_path],facecolor=color, linewidths=0)
+    ax.add_collection(col)
+
+#num_inds =
+print dir(dicbedsA['SA1000'])
+print dicbedsA['SA1000'].loc
+counter = len(pheno_geno)*2
+for ind in sorted_phenos:
+    this_ind = ind[0]
+    #print this_ind
+    if this_ind in pheno_geno:
+        #if this_ind == 'SA1000':
+        print this_ind
+        for tract in range(len(dicbedsA[this_ind].chrstarts[pos[0]])):
+            print [counter, dicbedsA[this_ind].chrstarts[pos[0]][tract]/1e6, counter+1, dicbedsA[this_ind].chrends[pos[0]][tract]/1e6,
+                   brewer_vec[dicbedsA[this_ind].chrdict[pos[0]][tract].name]]
+            plot_rects(counter, dicbedsA[this_ind].chrstarts[pos[0]][tract]/1e6, counter+1, dicbedsA[this_ind].chrends[pos[0]][tract]/1e6,
+                       brewer_vec[dicbedsA[this_ind].chrdict[pos[0]][tract].name])
+        print counter
+        counter = counter - 1
+        print counter
+        for tract in range(len(dicbedsB[this_ind].chrstarts[pos[0]])):
+            print [counter, dicbedsB[this_ind].chrstarts[pos[0]][tract]/1e6, counter+1, dicbedsB[this_ind].chrends[pos[0]][tract]/1e6,
+                       brewer_vec[dicbedsB[this_ind].chrdict[pos[0]][tract].name]]
+            plot_rects(counter, dicbedsB[this_ind].chrstarts[pos[0]][tract]/1e6, counter+1, dicbedsB[this_ind].chrends[pos[0]][tract]/1e6,
+                       brewer_vec[dicbedsB[this_ind].chrdict[pos[0]][tract].name])
+        counter = counter - 1
+
+p = []
+pops = ['CEU', 'LWK', 'SAN', 'UNK']
+for i in range(len(pops)):
+    p.append(plt.Rectangle((0, 0), 1, 1, color=brewer_vec[pops[i]]))
+box = ax.get_position()
+ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                 box.width, box.height * 0.9])
+
+ax.legend(p, pops, loc='upper center', bbox_to_anchor=(0.5, -0.1),
+          fancybox=True, shadow=True, ncol=5)
+
+#leg = ax.legend(p, pops, loc=4, fancybox=True, bbox_to_anchor=(0.5, -0.05), shadow=True)
+#leg.get_frame().set_alpha(0)
 
 fig.savefig(options.out)
-#dicbedsA['SA029'].chrdict['1'][0].name #this gives the name of the tract for this position
-#dicbedsA['SA029'].loc(70513248, dicbedsA['SA029'].chrstarts['3'], dicbedsA['SA029'].chrends['3']) #finds the index of the tract that this position resides in
