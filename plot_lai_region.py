@@ -78,10 +78,6 @@ for ind in pheno_dict:
 #sort individuals by phenotype
 sorted_phenos = sorted(pheno_dict.iteritems(), key=operator.itemgetter(1))
 print sorted_phenos
-print len(sorted_phenos)
-
-print tract_A['SA1000']
-print dicbedsA[ind].chrstarts[pos[0]]
 
 #define plotting space
 brewer_vec = brewer2mpl.get_map('Set1', 'qualitative', 3).hex_colors
@@ -119,8 +115,6 @@ def plot_rects(bottom, left, top, right, color):
     ax.add_collection(col)
 
 #num_inds =
-print dir(dicbedsA['SA1000'])
-print dicbedsA['SA1000'].loc
 counter = len(pheno_geno)*2
 for ind in sorted_phenos:
     this_ind = ind[0]
