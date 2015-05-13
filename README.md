@@ -356,6 +356,7 @@ i=550_Omni; qsub -b y -w e -e /home/armartin/gsfs0/sa_analysis/aspca/logs -o /ho
 -vit /home/armartin/gsfs0/sa_analysis/aspca/SA_${i}_CEU_LWK_SA_phase3_san.vit \
 -m /home/armartin/gsfs0/sa_analysis/aspca/SA_${i}_CEU_LWK_SA_phase3_san.markers \
 -o /home/armartin/gsfs0/sa_analysis/aspca/SA_${i}_CEU_LWK_SA_phase3_san_posterior99.aspca \
+-mask 3
 ```
 #### Orthogonalize PCs
 
