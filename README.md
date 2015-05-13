@@ -359,4 +359,8 @@ i=550_Omni; qsub -b y -w e -e /home/armartin/gsfs0/sa_analysis/aspca/logs -o /ho
 ```
 #### Orthogonalize PCs
 
-After running PCAMask, run PCA on the output to orthogonalize the results. You can use the attached script (written by Chris Gignoux) to quickly run PCA on the output.
+After running PCAMask, run PCA on the output to orthogonalize the results. You can use the simple_pca.py script (written by Chris Gignoux) to quickly run PCA on the output. For example:
+
+```
+python simple_pca.py /home/armartin/gsfs0/sa_analysis/aspca/SA_${i}_CEU_LWK_SA_phase3_san_posterior99.aspca_3.pca.txt
+```
