@@ -104,15 +104,11 @@ for i in {1..22}; do python shapeit2rfmix.py \
 After the fact, you can fix the classes file as follows:
 
 ```
-POP=ACB; python classes.py \
---sample ${POP}.sample \
---out ${POP}.classes
+python classes.py \
+--ref pop1.ref,pop2.ref,pop3.ref \
+--sample pops.sample \
+--out pops.classes
 ```
-
-To do for these scripts:
-* Make shapeit2rfmix.py more flexible to accept an arbitrary number of reference panels.
-* Reduce option complexity for shapeit2rfmix.py so that reference panels can more flexibly be in one or more phased files
-* Enable classes.py to accept an arbitrary number of reference panels.
 
 ## 1.) Infer local ancestry ##
 #### Run RFMix ####
