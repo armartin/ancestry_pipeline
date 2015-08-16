@@ -40,8 +40,9 @@ def find_indices(keep_set, shapeit_sample, out_sample):
     note: index order corresponds with the input keep file.
     i.e. they are output in same order as ref_keep and admixed_keep files
     """
-    header0 = shapeit_sample.readline()
+    header0 = shapeit_sample.readline().strip().split()
     header1 = shapeit_sample.readline()
+    print header0
     if header0 != ['ID_1', 'ID_2', 'missing', 'father', 'mother', 'sex', 'plink_pheno']:
         raise RuntimeError('Shapeit sample file appears to be incorrect')
     indices = []
@@ -214,8 +215,6 @@ def main(args):
         all_haps.append(get_haps(open_shapeit(hap), sample_indices[i], full_intersection))
     all_haps.append(get_haps(open_shapeit(args.shapeit_hap_admixed), sample_admixed_indices, full_intersection))
     
-    print sample_indices
-    print len(sample_indices[0])
     #checks that the intersection of ref_keep and ref_sample + admixed_keep and admixed_sample is equal to the number of haplotypes I will print
     assert sum([len(x[intersection_ordered[0]]) for x in all_haps]) == sum([len(x) for x in sample_indices]) + len(sample_admixed_indices)
     
@@ -223,7 +222,6 @@ def main(args):
     print 'Writing alleles file (total sites=' + str(len(intersection_ordered)) + ') [' + datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S') + ']'
     for snp in intersection_ordered:
         allele_pairs = [tuple(hap[snp]) for hap in genos]
-        print allele_pairs
         if len(set(allele_pairs)) == 1: #preferentially choose 2 alleles if bialleleic, if only monomorphic, choose that
             if '0' in allele_pairs[0]: #if all monomorphic, remove 2nd allele
                 allele_pairs[0].remove('0')
