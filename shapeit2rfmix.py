@@ -42,7 +42,6 @@ def find_indices(keep_set, shapeit_sample, out_sample):
     """
     header0 = shapeit_sample.readline().strip().split()
     header1 = shapeit_sample.readline()
-    print header0
     if header0 != ['ID_1', 'ID_2', 'missing', 'father', 'mother', 'sex', 'plink_pheno']:
         raise RuntimeError('Shapeit sample file appears to be incorrect')
     indices = []
