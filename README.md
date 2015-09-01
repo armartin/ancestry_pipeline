@@ -165,7 +165,11 @@ line=bed_a.bed; line2=bed_b.bed; IND='NA12878'; python plot_karyogram.py \
 --ind ${IND} \
 --out ${IND}.png"; done
 ```
-Example output is attached. This script accepts a centromere bed file.
+Example output looks like the following:
+
+![alt tag](https://aliciarmartindotcom.files.wordpress.com/2012/02/hg01892.png?w=800)
+
+This script accepts a centromere bed file.
 
 To do:
 * Fix plot_karyogram.py so that the rounding at the ends of chromosomes occurs because the first and last chromosome tracts have been identified in the script, rather than required in the centromere bed file
