@@ -87,7 +87,7 @@ for i in {1..22}; do python shapeit2rfmix.py \
 --out CEU_LWK_SA; done
 ```
 
-This script assumes that different reference and inference panels are phased separately and performs strand flip checking across files. It's totally fine (and actually better) if you phase them all together. You just need to beware that the output *.classes file may not be defined as you want, and I wrote another script that allows you to fix posthoc (currently only supports 3 reference panels, but should be easily made more flexible). To run the above script when all individuals are phased together, you can run as follows:
+The ref_keep and admixed_keep files are lists (one individual ID per line) with the corresponding reference and admixed panels. This script assumes that different reference and inference panels are phased separately and performs strand flip checking across files. It's totally fine (and actually better) if you phase them all together. You just need to beware that the output *.classes file may not be defined as you want, and I wrote another script that allows you to fix posthoc (currently only supports 3 reference panels, but should be easily made more flexible). To run the above script when all individuals are phased together, you can run as follows:
 
 ```
 for i in {1..22}; do python shapeit2rfmix.py \
