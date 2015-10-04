@@ -72,6 +72,7 @@ do shapeit \
 1000GP_Phase3_chr${i}.legend.gz \
 1000GP_Phase3.sample \
 -B ACB_example_chr${i} \
+--duohmm \
 --input-map genetic_map_chr${i}_combined_b37.txt \
 --exclude-snp ACB_example_chr${i}.mendel.snp.strand.exclude \
 --output-max ACB_example_chr${i}.haps.gz \
@@ -81,36 +82,34 @@ Phasing should be parallelized across chromosomes and can be run with plink file
 
 #### 3) Make RFMix input ####
 
-I wrote a script to convert SHAPEIT2 output to RFMix input (as well as a .map file with 3 columns: physical position, cM position, rsID, which will be useful downstream), which you can run as follows:
+I wrote a script to convert SHAPEIT2 output to RFMix input (as well as a .map file with 3 columns: physical position, cM position, rsID, which will be useful downstream). The ref_keep and admixed_keep files are lists (one individual ID per line) with the corresponding reference and admixed panels. Ideally, you should phase reference and inference panels together and then run the script as follows:
 
 ```
 for i in {1..22}; do python shapeit2rfmix.py \
---shapeit_hap1 CEU_chr${i}.haps \
---shapeit_hap2 LWK_chr${i}.haps \
---shapeit_hap3 SAN_all_chr${i}.haps \
---shapeit_hap_admixed SAN_all_chr${i}.haps \
---shapeit_sample1 CEU_chr${i}.sample \
---shapeit_sample2 LWK_chr${i}.sample \
---shapeit_sample3 SAN_all_chr${i}.sample \
---shapeit_sample_admixed SAN_all_chr${i}.sample \
---ref_keep CEU+LWK+SA_90.ref \
---admixed_keep CEU+LWK+SA_90.inf \
+--shapeit_hap_ref ACB_example_chr${i}.haps.gz \
+--shapeit_hap_admixed ACB_example_chr${i}.haps.gz \
+--shapeit_sample_ref ACB_example_chr${i}.sample \
+--shapeit_sample_admixed ACB_example_chr${i}.sample \
+--ref_keep ACB_example.ref \
+--admixed_keep ACB_example.notref \
 --chr ${i} \
---out CEU_LWK_SA; done
+--genetic_map genetic_map_chr${i}_combined_b37.txt \
+--out ACB_example; done
 ```
 
-The ref_keep and admixed_keep files are lists (one individual ID per line) with the corresponding reference and admixed panels. This script assumes that different reference and inference panels are phased separately and performs strand flip checking across files. It's totally fine (and actually better) if you phase them all together. You just need to beware that the output *.classes file may not be defined as you want, and I wrote another script that allows you to fix posthoc (currently only supports 3 reference panels, but should be easily made more flexible). To run the above script when all individuals are phased together, you can run as follows:
+However, if you phased them separately, the script will check for strand flip errors across phased files and correct them where possible when run e.g. as follows:
 
 ```
 for i in {1..22}; do python shapeit2rfmix.py \
---shapeit_hap1 SA_550_OMNI_CEU_LWK_phase3_chr${i}.haps \
---shapeit_hap_admixed SA_550_OMNI_CEU_LWK_phase3_chr${i}.haps \
---shapeit_sample1 SA_550_OMNI_CEU_LWK_phase3_chr${i}.sample \
---shapeit_sample_admixed SA_550_OMNI_CEU_LWK_phase3_chr${i}.sample \
---ref_keep CEU_LWK_SAN.ref \
---admixed_keep CEU_LWK_SAN.notref \
+--shapeit_hap_ref CEU_example_chr${i}.haps.gz,YRI_example_chr${i}.haps.gz \
+--shapeit_hap_admixed ACB_only_chr${i}.haps \
+--shapeit_sample_ref CEU_example_chr${i}.sample,CEU_example_chr${i}.sample \
+--shapeit_sample_admixed ACB_only_chr${i}.sample \
+--ref_keep ACB.ref \
+--admixed_keep ACB.notref \
 --chr ${i} \
---out CEU_LWK_SA_phase3; done
+--genetic_map genetic_map_chr${i}_combined_b37.txt \
+--out CEU_YRI_ACB; done
 ```
 
 After the fact, you can fix the classes file as follows:

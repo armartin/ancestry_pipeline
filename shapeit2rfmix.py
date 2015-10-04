@@ -101,7 +101,7 @@ def main(args):
     for line in ref_keep:
         ref_set.append(line.strip())
     
-    #don't require admixed keep file
+    #require admixed keep file
     admixed_set = []
     if args.admixed_keep is not None:
         admixed_keep = open(args.admixed_keep)
@@ -252,7 +252,7 @@ if __name__ == '__main__':
     parser.add_argument('--shapeit_sample_admixed', required=True)
     
     parser.add_argument('--ref_keep', help='a list of individual IDs', required=True)
-    parser.add_argument('--admixed_keep', help='a list of individual IDs')
+    parser.add_argument('--admixed_keep', help='a list of individual IDs', required=True)
     
     parser.add_argument('--chr', required=True)
     
