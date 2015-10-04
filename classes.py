@@ -15,7 +15,7 @@ def main(args):
     ancs = []
     for anc in ref:
         ancs.append(read_ref(anc))
-    
+    print ancs
     ind_order = []
     out = open(args.out, 'w')
     sample = open(args.sample)
