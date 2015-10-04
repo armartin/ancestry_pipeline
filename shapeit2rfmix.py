@@ -141,7 +141,7 @@ def main(args):
     intersection_ordered = sorted(list(full_intersection))
     
     #save all genetic positions that are known in a recombination map in a dict
-    genetic_map = open(args.genetic_map + args.chr + '_combined_b37.txt')
+    genetic_map = open(args.genetic_map)
     pos_gen_map = {}
     header = genetic_map.readline().strip().split()
     if len(header) != 3:

@@ -4,6 +4,8 @@ Overall description: Run PCA on a VCF, phase data, convert phased data to RFMix 
 
 This repo gives information about how to run through phasing, local ancestry inference, generate collapsed bed files, plot karyograms, estimate global ancestry proportion from local ancestry proportions, generate and run ASPCA, and run TRACTS to model migration events, proportions, and timings.
 
+**Each step can be followed with the 1000 Genomes data (ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/supporting/hd_genotype_chip/) and systematically through this pipeline by downloading a toy dataset here: https://www.dropbox.com/sh/zbwka9u09f73gwo/AABc6FNl9fVBPjby8VQWzyeXa?dl=0**
+
 ## Pipeline Map ##
 #### 0.) Phase #####
 * Overview
@@ -34,7 +36,14 @@ This repo gives information about how to run through phasing, local ancestry inf
 
 ## 0.) Phase ###
 ##### Overview #####
-Any phasing tool will do, such as SHAPEIT2, BEAGLE, or MaCH. I usually run SHAPEIT2 (documentation here: http://www.shapeit.fr/) in two steps, first in check mode to identify SNPs that are incompatible and need to be excluded (also useful for summary info, which tells you about mendelian inconsistencies). 
+Any phasing tool will do, such as SHAPEIT2, BEAGLE, or MaCH. I usually run SHAPEIT2 (documentation here: http://www.shapeit.fr/) in two steps, first in check mode to identify SNPs that are incompatible and need to be excluded (also useful for summary info, which tells you about mendelian inconsistencies). Be sure to split by chromosome:
+```for i in {1..22};
+do plink \
+--bfile ACB_example \
+--chr ${i} \
+--make-bed \
+--out ACB_example_chr${i};
+done```
 
 #### 1) SHAPEIT2 check ####
 Run according to the documentation. Examples as follows:
@@ -42,28 +51,31 @@ Run according to the documentation. Examples as follows:
 for i in {1..22}; 
 do shapeit \
 -check \
---input-ref output.SHAPEIT.20140226.chr${i}.hap.gz \
-output.SHAPEIT.20140226.chr${i}.legend.gz \
-output.SHAPEIT.20140226.chr${i}.sample \
--B nam_fwd_cleaned_hg19_ref_chr${i} \
+--input-ref 1000GP_Phase3_chr${i}.hap.gz \
+1000GP_Phase3_chr${i}.legend.gz \
+1000GP_Phase3.sample \
+-B ACB_example_chr${i} \
 --input-map genetic_map_chr${i}_combined_b37.txt \
---output-log nam_fwd_cleaned_hg19_ref_chr${i}.mendel; 
+--output-log ACB_example_chr${i}.mendel; 
 done
 ```
+
+Note: 1000 Genomes reference panels and genetic maps can be downloaded here: https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.html
+Be sure to remove fully missing SNPs.
 
 #### 2) SHAPEIT2 phasing ####
 Second, I run the phasing algorithm itself (usually with a reference panel like phase 1 1000 Genomes), which takes some time and memory, for example as follows:
 ```
 for i in {1..22}; 
 do shapeit \
---input-ref output.SHAPEIT.20140226.chr${i}.hap.gz \
-output.SHAPEIT.20140226.chr${i}.legend.gz \
-output.SHAPEIT.20140226.chr${i}.sample \
--B nam_fwd_cleaned_hg19_ref_chr${i} \
+--input-ref 1000GP_Phase3_chr${i}.hap.gz \
+1000GP_Phase3_chr${i}.legend.gz \
+1000GP_Phase3.sample \
+-B ACB_example_chr${i} \
 --input-map genetic_map_chr${i}_combined_b37.txt \
---exclude-snp nam_fwd_cleaned_hg19_ref_chr${i}.mendel.snp.strand.exclude \
---output-max nam_fwd_cleaned_hg19_ref_chr${i}.haps \
-nam_fwd_cleaned_hg19_ref_chr${i}.sample; done
+--exclude-snp ACB_example_chr${i}.mendel.snp.strand.exclude \
+--output-max ACB_example_chr${i}.haps.gz \
+ACB_example_chr${i}.sample; done
 ```
 Phasing should be parallelized across chromosomes and can be run with plink files or VCF files. The output logs from SHAPEIT2 indicate whether Medelian errors are present in family designations in plink .fam files. I have not yet found a way to run SHAPEIT2 incorporating family information with VCF files. The output files are *.haps and *.sample files. 
 
