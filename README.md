@@ -180,17 +180,17 @@ done
 #### Plot ancestry karyograms ####
 I have also written a visualization script to plot karyograms, which can be run for example as follows:
 ```
-line=bed_a.bed; line2=bed_b.bed; IND='NA12878'; python plot_karyogram.py \
---bed_a ${line} \
---bed_b ${line2} \
+IND='HG02481'; python plot_karyogram.py \
+--bed_a ${IND}_A.bed \
+--bed_b ${IND}_B.bed \
 --ind ${IND} \
---out ${IND}.png"; done
+--out ${IND}.png
 ```
 Example output looks like the following:
 
-![alt tag](https://aliciarmartindotcom.files.wordpress.com/2012/02/hg01892.png?w=800)
+![alt tag](https://aliciarmartindotcom.files.wordpress.com/2012/02/hg02481.png?w=800)
 
-This script accepts a centromere bed file.
+This script accepts a centromere bed file (see Dropbox data).
 
 To do:
 * Fix plot_karyogram.py so that the rounding at the ends of chromosomes occurs because the first and last chromosome tracts have been identified in the script, rather than required in the centromere bed file
