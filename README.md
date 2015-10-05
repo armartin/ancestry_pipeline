@@ -112,7 +112,7 @@ for i in {1..22}; do python shapeit2rfmix.py \
 --out CEU_YRI_ACB; done
 ```
 
-After the fact, you can fix the classes file as follows:
+If you run the script as in the first example, you will need to fix the classes file , e.g. as follows:
 
 ```
 python classes.py \
@@ -120,6 +120,8 @@ python classes.py \
 --sample pops.sample \
 --out pops.classes
 ```
+
+Note that the sample file option here denotes a list of individuals as output by the previous script (consistent with individual order in alleles file), and NOT the shapeit sample file. Each ref file has at least two columns (similar to a plink keep file), with the relevant 2nd column corresponding with the individual ID.
 
 ## 1.) Infer local ancestry ##
 #### Run RFMix ####
