@@ -37,16 +37,20 @@ This repo gives information about how to run through phasing, local ancestry inf
 ## 0.) Phase ###
 ##### Overview #####
 Any phasing tool will do, such as SHAPEIT2, BEAGLE, or MaCH. I usually run SHAPEIT2 (documentation here: http://www.shapeit.fr/) in two steps, first in check mode to identify SNPs that are incompatible and need to be excluded (also useful for summary info, which tells you about mendelian inconsistencies). Be sure to split by chromosome:
-```for i in {1..22};
+
+```
+for i in {1..22};
 do plink \
 --bfile ACB_example \
 --chr ${i} \
 --make-bed \
 --out ACB_example_chr${i};
-done```
+done
+```
 
 #### 1) SHAPEIT2 check ####
 Run according to the documentation. Examples as follows:
+
 ```
 for i in {1..22}; 
 do shapeit \
@@ -60,11 +64,12 @@ do shapeit \
 done
 ```
 
-Note: 1000 Genomes reference panels and genetic maps can be downloaded here: https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.html
+Note: 1000 Genomes reference panels and genetic maps can be downloaded here: https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.html.
 Be sure to remove fully missing SNPs.
 
 #### 2) SHAPEIT2 phasing ####
 Second, I run the phasing algorithm itself (usually with a reference panel like phase 1 1000 Genomes), which takes some time and memory, for example as follows:
+
 ```
 for i in {1..22}; 
 do shapeit \
@@ -78,6 +83,7 @@ do shapeit \
 --output-max ACB_example_chr${i}.haps.gz \
 ACB_example_chr${i}.sample; done
 ```
+
 Phasing should be parallelized across chromosomes and can be run with plink files or VCF files. The output logs from SHAPEIT2 indicate whether Medelian errors are present in family designations in plink .fam files. I have not yet found a way to run SHAPEIT2 incorporating family information with VCF files. The output files are *.haps and *.sample files. 
 
 #### 3) Make RFMix input ####
@@ -116,9 +122,9 @@ If you run the script as in the first example, you will need to fix the classes 
 
 ```
 python classes.py \
---ref pop1.ref,pop2.ref,pop3.ref \
---sample pops.sample \
---out pops.classes
+--ref CEU_example_chr22.keep,YRI_example_chr22.keep \
+--sample CEU_YRI_ACB.sample \
+--out CEU_YRI_ACB.classes
 ```
 
 Note that the sample file option here denotes a list of individuals as output by the previous script (consistent with individual order in alleles file), and NOT the shapeit sample file. Each ref file has at least two columns (similar to a plink keep file), with the relevant 2nd column corresponding with the individual ID.
@@ -128,35 +134,37 @@ Note that the sample file option here denotes a list of individuals as output by
 After RFMix input is generated, run RFMix. There is nice documentation on what all of the options mean here: https://sites.google.com/site/rfmixlocalancestryinference/. Here is an example run that I went through for 1000 Genomes:
 
 ```
-for i in {1..22}; do for POP in ACB ASW CLM MXL PEL PUR; 
-do python RunRFMix.py \
--e 5 \
--w 0.5 \
+for i in {1..22}; do \
+python RunRFMix.py \
+-e 2 \
+-w 0.2 \
 --num-threads 4 \
 --use-reference-panels-in-EM \
 --forward-backward \
 PopPhased \
-${POP}_chr${i}.alleles \
-${POP}.classes \
-${POP}_chr${i}.snp_locations \
-${POP}_3_chr${i}.rfmix; done; done
+CEU_YRI_ACB_chr${i}.alleles \
+CEU_YRI_ACB.classes \
+CEU_YRI_ACB_chr${i}.snp_locations \
+-o CEU_YRI_ACB_chr${i}.rfmix; done
 ```
 
 ## 2.1) Collapse inferred data ##
 #### Collapse RFMix output into TRACTS-compatible bed files ####
 After running RFMix, I always collapse the output into bed files and generate karyogram plots to ensure that there weren't upstream issues, such as class file errors, phasing technical artifacts, sample mixups, etc. I wrote a script to do this, which can be run for example as follows:
 ```
-for POP in ACB ASW CLM MXL PEL PUR; do sed '1,143d' ${POP}.sample | while read line; do python collapse_ancestry.py \
---rfmix ${POP}_3_chrX.rfmix.5.Viterbi.txt \
---snp_locations ${POP}_chrX.snp_locations \
---fbk ${POP}_3_chrX.rfmix.5.ForwardBackward.txt \
+python collapse_ancestry.py \
+--rfmix CEU_YRI_ACB_chr1.rfmix.2.Viterbi.txt \
+--snp_locations CEU_YRI_ACB_chr1.snp_locations \
+--fbk CEU_YRI_ACB_chr1.rfmix.5.ForwardBackward.txt \
 --fbk_threshold 0.9 \
---ind ${line} \
---ind_info ${POP}.sample \
---pop_labels AFR,EUR,NAT \
+--ind HG02481 \
+--ind_info CEU_YRI_ACB.sample \
+--pop_labels EUR,AFR \
 --chrX \
---out ${line}"; done; done
+--out HG02481; done; done
 ```
+
+Note: all autosomes must have successfully completed, and including chromosome X is optional with the flag. The order of the population labels correspond with the order of labels in the classes file.
 
 #### Posthoc bed file filter (OPTIONAL) ####
 After the first bed file is created, it might be desirable to mask certain regions, for example if a particular region is shown to be frequently misspecified empirically in the reference panel. I have only used this script once, so it almost assuredly has some bugs, but I have provided it here as a starting point in case posthoc masking is a desirable feature. An example run is as follows:
