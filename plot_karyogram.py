@@ -18,7 +18,7 @@ parser.add_argument('--bed_b', required=True)
 parser.add_argument('--ind', default=None)
 parser.add_argument('--chrX', help='include chrX?', default=False, action="store_true")
 parser.add_argument('--centromeres', default='centromeres_hg19.bed')
-parser.add_argument('--pop_order', default=['AFR','EUR','NAT'], type='string', action='callback', callback=splitstr,
+parser.add_argument('--pop_order', default=['AFR','EUR','NAT'], type=str, action='callback', callback=splitstr,
                   help='comma-separated list of population labels in the order of rfmix populations (1 first, 2 second, and so on). Used in bed files and karyogram labels')
 parser.add_argument('--out')
 
