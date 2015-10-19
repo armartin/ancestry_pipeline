@@ -13,10 +13,10 @@ def parse_args():
   parser.add_argument('--rfmix', help='path to RFMix Viterbi output, chr expected in filename', required=True)
   parser.add_argument('--snp_locations', help='path to snp_locations file required by RFMix, chr expected in filename', required=True)
   parser.add_argument('--fbk', default=None)
-  parser.add_argument('--fbk_threshold', type='float', default = 0.9)
+  parser.add_argument('--fbk_threshold', type=float, default = 0.9)
   parser.add_argument('--ind', help='Individual ID, must match a line in --ind_info option', required=True)
   parser.add_argument('--ind_info', help='Individual IDs listed in the order they appear in RFMix Viterbi output', required=True)
-  parser.add_argument('--pop_labels', type='string', action='callback', callback=splitstr, default=['AFR','EUR','NAT'],
+  parser.add_argument('--pop_labels', type=string, action='callback', callback=splitstr, default=['AFR','EUR','NAT'],
                     help='comma-separated list of population labels in the order of rfmix populations (1 first, 2 second, and so on). Used in bed files and karyogram labels')
   parser.add_argument('--chrX', help='include chrX?', default=False, action="store_true")
   parser.add_argument('--out', help='prefix to bed file, _A.bed and _B.bed will be appended', required=True)
