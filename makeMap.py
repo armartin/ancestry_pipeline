@@ -1,3 +1,7 @@
+"""
+Interpolates genetic positions from a genetic map given a map or bim plink file
+"""
+
 __author__ = 'armartin'
 import argparse
 import sys
@@ -19,9 +23,9 @@ def main():
     #position COMBINED_rate(cM/Mb) Genetic_Map(cM)
     #72765 0.1245577896 0
     start = genmap.readline().strip().split()
-    (start_bp, start_cM) = (start[0], start[2])
+    (start_bp, start_cM) = (int(start[0]), float(start[2]))
     end = genmap.readline().strip().split()
-    (end_bp, end_cM) = (end[0], end[2])
+    (end_bp, end_cM) = (int(end[0]), float(end[2]))
     
     bim = open(args.bim)
     if args.out is not None:
@@ -33,7 +37,7 @@ def main():
     chr = args.chr
     print chr
     
-    (rsid, phys_pos, a0, a1) = (bim_line[1], bim_line[3], bim_line[4], bim_line[5])
+    (rsid, phys_pos, a0, a1) = (bim_line[1], int(bim_line[3]), bim_line[4], bim_line[5])
     while phys_pos < start_bp:
         proportion = (float(phys_pos) * float(start_cM)) / float(start_bp)
         write_map(my_map, [chr, rsid, str(proportion), phys_pos, a0, a1])
@@ -101,6 +105,7 @@ def check_conditions(phys_pos, start_bp, end_bp, rsid, bim, start_cM, end_cM, ge
                 return [phys_pos, start_bp, end_bp, rsid, bim, start_cM, end_cM, genmap, my_map, chr, a0, a1]
             else:
                 print 'Criteria 2d'
+                #this will happen if the first genotype in the bim file is before the first position in the genetic map
             #    print [phys_pos, start_bp, end_bp, rsid, bim, start_cM, end_cM, genmap, my_map, chr, a0, a1]
             ##########!!!!!!!! Something wrong when genetic data is before physical positions
             #elif phys_pos < start_bp:
