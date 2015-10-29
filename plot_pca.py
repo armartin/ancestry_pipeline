@@ -1,3 +1,8 @@
+"""
+Plots the output of smartpca
+"""
+
+__author__ = 'armartin'
 import matplotlib.pyplot as plt
 import argparse
 import brewer2mpl
@@ -10,7 +15,7 @@ import time
 
 parser = argparse.ArgumentParser(description='Parse some args')
 parser.add_argument('--evec') #assumes eval in same place
-parser.add_argument('--out') #if no out, assumes same as evec
+parser.add_argument('--out', help='uses png or pdf suffix to determine type of file to plot')
 parser.add_argument('--projected')
 parser.add_argument('--title')
 parser.add_argument('--noGrid')
@@ -22,10 +27,14 @@ evec = open(args.evec)
 my_eval = open(args.evec.replace('evec', 'eval'))
 which_pcs = map(int, args.which_pcs.split(','))
 print ['PC' + str(p) + ' ' for p in which_pcs]
+
 if args.out is None:
-    out = args.evec.replace('.evec', '_pca' + str(which_pcs[0]) + '_' + str(which_pcs[1]))
+    out = args.evec.replace('.evec', '_pca' + str(which_pcs[0]) + '_' + str(which_pcs[1]) + '.png')
 else:
     out = args.out
+if not (args.out.endswith('png') or args.out.endswith('pdf')):
+    raise ValueError('--out does not end in png or pdf')
+
 eval_per = []
 for line in my_eval:
     eval_per.append(float(line.strip()))
@@ -102,4 +111,4 @@ for i in range(len(pops)):
 leg = ax.legend(p, pops, loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':9}, numpoints=1) #, fancybox=True, ncol=len(pops)
 #leg = ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':9}, numpoints=1) #, fancybox=True, ncol=len(pops)
 #fig.tight_layout()
-plt.savefig(out + '.png', bbox_extra_artists=(leg,), bbox_inches='tight')
+plt.savefig(out, bbox_extra_artists=(leg,), bbox_inches='tight')
