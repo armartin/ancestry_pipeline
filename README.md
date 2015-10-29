@@ -7,8 +7,9 @@ This repo gives information about how to run through phasing, local ancestry inf
 ## Pipeline Map ##
 #### 0.) Phase #####
 * Overview
-* SHAPEIT2 check
-* SHAPEIT2 phasing
+  * HAPI-UR
+  * SHAPEIT2 check
+  * SHAPEIT2 phasing
 * Make RFMix input
 
 ##### 1.) Infer local ancestry #####
@@ -34,7 +35,7 @@ This repo gives information about how to run through phasing, local ancestry inf
 
 ## 0.) Phase ###
 ##### Overview #####
-Any phasing tool will do, such as SHAPEIT2, BEAGLE, or MaCH. I usually run SHAPEIT2 (documentation here: http://www.shapeit.fr/) in two steps, first in check mode to identify SNPs that are incompatible and need to be excluded (also useful for summary info, which tells you about mendelian inconsistencies). 
+Any phasing tool will do, such as SHAPEIT2, BEAGLE, or HAPI-UR. I usually run SHAPEIT2 (documentation here: http://www.shapeit.fr/) for ~100s of samples in two steps, first in check mode to identify SNPs that are incompatible and need to be excluded (also useful for summary info, which tells you about mendelian inconsistencies). For larger datasets (~1000s+), HAPI-UR is more accurate and orders of magnitude faster.
 
 #### 1) SHAPEIT2 check ####
 Run according to the documentation. Examples as follows:
@@ -69,7 +70,13 @@ Phasing should be parallelized across chromosomes and can be run with plink file
 
 #### 3) Make RFMix input ####
 
-I wrote a script to convert SHAPEIT2 output to RFMix input (as well as a .map file with 3 columns: physical position, cM position, rsID, which will be useful downstream), which you can run as follows:
+I have written quick converters for two phasing programs: SHAPEIT2 and HAPI-UR.
+
+##### HAPI-UR #####
+The output from HAPI-UR is almost exactly what you need to run RFMix. Before running 
+
+##### SHAPEIT2 #####
+I also wrote a script to convert SHAPEIT2 output to RFMix input (as well as a .map file with 3 columns: physical position, cM position, rsID, which will be useful downstream), which you can run as follows:
 
 ```
 for i in {1..22}; do python shapeit2rfmix.py \
