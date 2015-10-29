@@ -6,7 +6,10 @@ def read_ref(anc):
     anc_set = set()
     anc = open(anc)
     for line in anc:
-        anc_set.add(line.strip().split()[1]) #split?
+        try:
+            anc_set.add(line.strip().split()[1]) #split?
+        except IndexError:
+            raise IOError('Input misspecified. 2nd column needs to correspond with individual ID.')
     return(anc_set)
 
 def main(args):
@@ -15,19 +18,21 @@ def main(args):
     ancs = []
     for anc in ref:
         ancs.append(read_ref(anc))
-    
+
     ind_order = []
     out = open(args.out, 'w')
     sample = open(args.sample)
     for line in sample:
         line = line.strip()
+        if line == 'ID_1 ID_2 missing father mother sex plink_pheno':
+            raise IOError('sample file must be list of individual IDs output by shapeit2rfmix with order of inds in alleles file, not shapeit sample file.')
         ind_order.append(line)
         in_ref = 0
         for anc in range(len(ancs)):
             in_ref = in_ref + int(line in ancs[anc])
             if line in ancs[anc]:
                 out.write(str(anc + 1) + ' ' + str(anc + 1) + ' ')
-        print line + ': ' + str(in_ref)
+
         if in_ref == 0:
             out.write('0 0 ')
     out.write('\n')

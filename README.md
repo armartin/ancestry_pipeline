@@ -4,6 +4,8 @@ Overall description: Run PCA on a VCF, phase data, convert phased data to RFMix 
 
 This repo gives information about how to run through phasing, local ancestry inference, generate collapsed bed files, plot karyograms, estimate global ancestry proportion from local ancestry proportions, generate and run ASPCA, and run TRACTS to model migration events, proportions, and timings.
 
+**Each step can be followed with the 1000 Genomes data (ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/supporting/hd_genotype_chip/) and systematically through this pipeline by downloading a toy dataset here: https://www.dropbox.com/sh/zbwka9u09f73gwo/AABc6FNl9fVBPjby8VQWzyeXa?dl=0**
+
 ## Pipeline Map ##
 #### 0.) Phase #####
 * Overview
@@ -37,35 +39,52 @@ This repo gives information about how to run through phasing, local ancestry inf
 ##### Overview #####
 Any phasing tool will do, such as SHAPEIT2, BEAGLE, or HAPI-UR. I usually run SHAPEIT2 (documentation here: http://www.shapeit.fr/) for ~100s of samples in two steps, first in check mode to identify SNPs that are incompatible and need to be excluded (also useful for summary info, which tells you about mendelian inconsistencies). For larger datasets (~1000s+), HAPI-UR is more accurate and orders of magnitude faster.
 
+```
+for i in {1..22};
+do plink \
+--bfile ACB_example \
+--chr ${i} \
+--make-bed \
+--out ACB_example_chr${i};
+done
+```
+
 #### 1) SHAPEIT2 check ####
 Run according to the documentation. Examples as follows:
+
 ```
 for i in {1..22}; 
 do shapeit \
 -check \
---input-ref output.SHAPEIT.20140226.chr${i}.hap.gz \
-output.SHAPEIT.20140226.chr${i}.legend.gz \
-output.SHAPEIT.20140226.chr${i}.sample \
--B nam_fwd_cleaned_hg19_ref_chr${i} \
+--input-ref 1000GP_Phase3_chr${i}.hap.gz \
+1000GP_Phase3_chr${i}.legend.gz \
+1000GP_Phase3.sample \
+-B ACB_example_chr${i} \
 --input-map genetic_map_chr${i}_combined_b37.txt \
---output-log nam_fwd_cleaned_hg19_ref_chr${i}.mendel; 
+--output-log ACB_example_chr${i}.mendel; 
 done
 ```
 
+Note: 1000 Genomes reference panels and genetic maps can be downloaded here: https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.html.
+Be sure to remove fully missing SNPs.
+
 #### 2) SHAPEIT2 phasing ####
 Second, I run the phasing algorithm itself (usually with a reference panel like phase 1 1000 Genomes), which takes some time and memory, for example as follows:
+
 ```
 for i in {1..22}; 
 do shapeit \
---input-ref output.SHAPEIT.20140226.chr${i}.hap.gz \
-output.SHAPEIT.20140226.chr${i}.legend.gz \
-output.SHAPEIT.20140226.chr${i}.sample \
--B nam_fwd_cleaned_hg19_ref_chr${i} \
+--input-ref 1000GP_Phase3_chr${i}.hap.gz \
+1000GP_Phase3_chr${i}.legend.gz \
+1000GP_Phase3.sample \
+-B ACB_example_chr${i} \
+--duohmm \
 --input-map genetic_map_chr${i}_combined_b37.txt \
---exclude-snp nam_fwd_cleaned_hg19_ref_chr${i}.mendel.snp.strand.exclude \
---output-max nam_fwd_cleaned_hg19_ref_chr${i}.haps \
-nam_fwd_cleaned_hg19_ref_chr${i}.sample; done
+--exclude-snp ACB_example_chr${i}.mendel.snp.strand.exclude \
+--output-max ACB_example_chr${i}.haps.gz \
+ACB_example_chr${i}.sample; done
 ```
+
 Phasing should be parallelized across chromosomes and can be run with plink files or VCF files. The output logs from SHAPEIT2 indicate whether Medelian errors are present in family designations in plink .fam files. I have not yet found a way to run SHAPEIT2 incorporating family information with VCF files. The output files are *.haps and *.sample files. 
 
 #### 3) Make RFMix input ####
@@ -80,77 +99,79 @@ I also wrote a script to convert SHAPEIT2 output to RFMix input (as well as a .m
 
 ```
 for i in {1..22}; do python shapeit2rfmix.py \
---shapeit_hap1 CEU_chr${i}.haps \
---shapeit_hap2 LWK_chr${i}.haps \
---shapeit_hap3 SAN_all_chr${i}.haps \
---shapeit_hap_admixed SAN_all_chr${i}.haps \
---shapeit_sample1 CEU_chr${i}.sample \
---shapeit_sample2 LWK_chr${i}.sample \
---shapeit_sample3 SAN_all_chr${i}.sample \
---shapeit_sample_admixed SAN_all_chr${i}.sample \
---ref_keep CEU+LWK+SA_90.ref \
---admixed_keep CEU+LWK+SA_90.inf \
+--shapeit_hap_ref ACB_example_chr${i}.haps.gz \
+--shapeit_hap_admixed ACB_example_chr${i}.haps.gz \
+--shapeit_sample_ref ACB_example_chr${i}.sample \
+--shapeit_sample_admixed ACB_example_chr${i}.sample \
+--ref_keep ACB_example.ref \
+--admixed_keep ACB_example.notref \
 --chr ${i} \
---out CEU_LWK_SA; done
+--genetic_map genetic_map_chr${i}_combined_b37.txt \
+--out ACB_example; done
 ```
 
-This script assumes that different reference and inference panels are phased separately and performs strand flip checking across files. It's totally fine (and actually better) if you phase them all together. You just need to beware that the output *.classes file may not be defined as you want, and I wrote another script that allows you to fix posthoc (currently only supports 3 reference panels, but should be easily made more flexible). To run the above script when all individuals are phased together, you can run as follows:
+However, if you phased them separately, the script will check for strand flip errors across phased files and correct them where possible when run e.g. as follows:
 
 ```
 for i in {1..22}; do python shapeit2rfmix.py \
---shapeit_hap1 SA_550_OMNI_CEU_LWK_phase3_chr${i}.haps \
---shapeit_hap_admixed SA_550_OMNI_CEU_LWK_phase3_chr${i}.haps \
---shapeit_sample1 SA_550_OMNI_CEU_LWK_phase3_chr${i}.sample \
---shapeit_sample_admixed SA_550_OMNI_CEU_LWK_phase3_chr${i}.sample \
---ref_keep CEU_LWK_SAN.ref \
---admixed_keep CEU_LWK_SAN.notref \
+--shapeit_hap_ref CEU_example_chr${i}.haps.gz,YRI_example_chr${i}.haps.gz \
+--shapeit_hap_admixed ACB_only_chr${i}.haps \
+--shapeit_sample_ref CEU_example_chr${i}.sample,CEU_example_chr${i}.sample \
+--shapeit_sample_admixed ACB_only_chr${i}.sample \
+--ref_keep ACB.ref \
+--admixed_keep ACB.notref \
 --chr ${i} \
---out CEU_LWK_SA_phase3; done
+--genetic_map genetic_map_chr${i}_combined_b37.txt \
+--out CEU_YRI_ACB; done
 ```
 
-After the fact, you can fix the classes file as follows:
+If you run the script as in the first example, you will need to fix the classes file , e.g. as follows:
 
 ```
 python classes.py \
---ref pop1.ref,pop2.ref,pop3.ref \
---sample pops.sample \
---out pops.classes
+--ref CEU_example_chr22.keep,YRI_example_chr22.keep \
+--sample CEU_YRI_ACB.sample \
+--out CEU_YRI_ACB.classes
 ```
+
+Note that the sample file option here denotes a list of individuals as output by the previous script (consistent with individual order in alleles file), and NOT the shapeit sample file. Each ref file has at least two columns (similar to a plink keep file), with the relevant 2nd column corresponding with the individual ID.
 
 ## 1.) Infer local ancestry ##
 #### Run RFMix ####
 After RFMix input is generated, run RFMix. There is nice documentation on what all of the options mean here: https://sites.google.com/site/rfmixlocalancestryinference/. Here is an example run that I went through for 1000 Genomes:
 
 ```
-for i in {1..22}; do for POP in ACB ASW CLM MXL PEL PUR; 
-do python RunRFMix.py \
--e 5 \
--w 0.5 \
+for i in {1..22}; do \
+python RunRFMix.py \
+-e 2 \
+-w 0.2 \
 --num-threads 4 \
 --use-reference-panels-in-EM \
 --forward-backward \
 PopPhased \
-${POP}_chr${i}.alleles \
-${POP}.classes \
-${POP}_chr${i}.snp_locations \
-${POP}_3_chr${i}.rfmix; done; done
+CEU_YRI_ACB_chr${i}.alleles \
+CEU_YRI_ACB.classes \
+CEU_YRI_ACB_chr${i}.snp_locations \
+-o CEU_YRI_ACB_chr${i}.rfmix; done
 ```
 
 ## 2.1) Collapse inferred data ##
 #### Collapse RFMix output into TRACTS-compatible bed files ####
 After running RFMix, I always collapse the output into bed files and generate karyogram plots to ensure that there weren't upstream issues, such as class file errors, phasing technical artifacts, sample mixups, etc. I wrote a script to do this, which can be run for example as follows:
 ```
-for POP in ACB ASW CLM MXL PEL PUR; do sed '1,143d' ${POP}.sample | while read line; do python collapse_ancestry.py \
---rfmix ${POP}_3_chrX.rfmix.5.Viterbi.txt \
---snp_locations ${POP}_chrX.snp_locations \
---fbk ${POP}_3_chrX.rfmix.5.ForwardBackward.txt \
+python collapse_ancestry.py \
+--rfmix CEU_YRI_ACB_chr1.rfmix.2.Viterbi.txt \
+--snp_locations CEU_YRI_ACB_chr1.snp_locations \
+--fbk CEU_YRI_ACB_chr1.rfmix.5.ForwardBackward.txt \
 --fbk_threshold 0.9 \
---ind ${line} \
---ind_info ${POP}.sample \
---pop_labels AFR,EUR,NAT \
+--ind HG02481 \
+--ind_info CEU_YRI_ACB.sample \
+--pop_labels EUR,AFR \
 --chrX \
---out ${line}"; done; done
+--out HG02481; done; done
 ```
+
+Note: all autosomes must have successfully completed, and including chromosome X is optional with the flag. The order of the population labels correspond with the order of labels in the classes file.
 
 #### Posthoc bed file filter (OPTIONAL) ####
 After the first bed file is created, it might be desirable to mask certain regions, for example if a particular region is shown to be frequently misspecified empirically in the reference panel. I have only used this script once, so it almost assuredly has some bugs, but I have provided it here as a starting point in case posthoc masking is a desirable feature. An example run is as follows:
@@ -166,17 +187,17 @@ done
 #### Plot ancestry karyograms ####
 I have also written a visualization script to plot karyograms, which can be run for example as follows:
 ```
-line=bed_a.bed; line2=bed_b.bed; IND='NA12878'; python plot_karyogram.py \
---bed_a ${line} \
---bed_b ${line2} \
+IND='HG02481'; python plot_karyogram.py \
+--bed_a ${IND}_A.bed \
+--bed_b ${IND}_B.bed \
 --ind ${IND} \
---out ${IND}.png"; done
+--out ${IND}.png
 ```
 Example output looks like the following:
 
-![alt tag](https://aliciarmartindotcom.files.wordpress.com/2012/02/hg01892.png?w=800)
+![alt tag](https://aliciarmartindotcom.files.wordpress.com/2012/02/hg02481.png?w=800)
 
-This script accepts a centromere bed file.
+This script accepts a centromere bed file (see Dropbox data).
 
 To do:
 * Fix plot_karyogram.py so that the rounding at the ends of chromosomes occurs because the first and last chromosome tracts have been identified in the script, rather than required in the centromere bed file

@@ -1,5 +1,5 @@
 __author__ = 'armartin'
-from optparse import  OptionParser
+import argparse
 import matplotlib.pyplot as plt
 import pylab
 from matplotlib.path import Path
@@ -11,24 +11,18 @@ import os
 def splitstr(option, opt, value, parser):
   return(setattr(parser.values, option.dest, value.split(',')))
 
-USAGE = """
-plot_karyogram.py   --bed_a
-                    --bed_b
-                    --pop_order
-                    --out
-"""
-parser = OptionParser(USAGE)
+parser = argparse.ArgumentParser()
 
-parser.add_option('--bed_a', default='/Users/alicia/Dropbox/Shared/SA_Phenotypes/Ancestry/RFMix_LocalAncestry/CEU_LWK_SAN/rfmix1.5.4/550/bed_files/SA006_A.bed')
-parser.add_option('--bed_b', default='/Users/alicia/Dropbox/Shared/SA_Phenotypes/Ancestry/RFMix_LocalAncestry/CEU_LWK_SAN/rfmix1.5.4/550/bed_files/SA006_B.bed')
-parser.add_option('--ind', default=None)
-parser.add_option('--chrX', help='include chrX?', default=False, action="store_true")
-parser.add_option('--centromeres', default='/home/armartin/rare/chip_collab/admixed/affy6/lai_output/centromeres.bed')
-parser.add_option('--pop_order', default=['AFR','EUR','NAT'], type='string', action='callback', callback=splitstr,
+parser.add_argument('--bed_a', required=True)
+parser.add_argument('--bed_b', required=True)
+parser.add_argument('--ind', default=None)
+parser.add_argument('--chrX', help='include chrX?', default=False, action="store_true")
+parser.add_argument('--centromeres', default='centromeres_hg19.bed')
+parser.add_argument('--pop_order', default=['AFR','EUR','NAT'], type=str, action='callback', callback=splitstr,
                   help='comma-separated list of population labels in the order of rfmix populations (1 first, 2 second, and so on). Used in bed files and karyogram labels')
-parser.add_option('--out')
+parser.add_argument('--out')
 
-(options, args) = parser.parse_args()
+args = parser.parse_args()
 
 def plot_rects(anc, chr, start, stop, hap, pop_order, colors, chrX):    
     centro_coords = map(float, centromeres[str(chr)])
@@ -120,19 +114,19 @@ def plot_rects(anc, chr, start, stop, hap, pop_order, colors, chrX):
 
 
 #read in bed files and get individual name
-bed_a = open(options.bed_a)
-bed_b = open(options.bed_b)
-pop_order = options.pop_order
-if options.ind is None:
-    ind = '_'.join(options.bed_a.split('/')[-1].split('.')[0].split('_')[0:-1])
+bed_a = open(args.bed_a)
+bed_b = open(args.bed_b)
+pop_order = args.pop_order
+if args.ind is None:
+    ind = '_'.join(args.bed_a.split('/')[-1].split('.')[0].split('_')[0:-1])
 else:
-    ind = options.ind
+    ind = args.ind
 
 #define plotting space
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.set_xlim(-5,300)
-chrX = options.chrX
+chrX = args.chrX
 if chrX:
   ax.set_ylim(24,0)
 else:
@@ -140,7 +134,7 @@ else:
 plt.xlabel('Genetic position (cM)')
 plt.ylabel('Chromosome')
 plt.title(ind)
-if options.chrX:
+if args.chrX:
   plt.yticks(range(1,24))
   yticks = range(1,23)
   yticks.append('X')
@@ -154,7 +148,7 @@ colors=bmap.mpl_colors
 colors.append((0,0,0))
 
 #define centromeres
-centro = open(options.centromeres)
+centro = open(args.centromeres)
 centromeres = {}
 for line in centro:
     line = line.strip().split()
@@ -193,4 +187,4 @@ for spine in spines_to_remove:
 ax.xaxis.set_ticks_position('none')
 ax.yaxis.set_ticks_position('none')
 
-fig.savefig(options.out)
+fig.savefig(args.out)
