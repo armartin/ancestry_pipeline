@@ -1,8 +1,5 @@
 __author__ = 'armartin'
-from optparse import  OptionParser
-
-def splitstr(option, opt, value, parser):
-  return(setattr(parser.values, option.dest, value.split(',')))
+import argparse
 
 USAGE = """
 lai_global.py   --bed_list
@@ -10,20 +7,20 @@ lai_global.py   --bed_list
                 --pops
                 --out
 """
-parser = OptionParser(USAGE)
+parser = argparse.ArgumentParser()
 
-parser.add_option('--bed_list')
-parser.add_option('--ind_list')
-parser.add_option('--pops', default=['AFR','EUR','NAT','UNK'], type='string', action='callback', callback=splitstr,
+parser.add_argument('--bed_list')
+parser.add_argument('--ind_list')
+parser.add_argument('--pops', default='AFR,EUR,NAT,UNK',
                   help='comma-separated list of population labels in the order of rfmix populations (1 first, 2 second, and so on). Used in bed files and karyogram labels')
-parser.add_option('--out')
+parser.add_argument('--out')
 
-(options, args) = parser.parse_args()
+args = parser.parse_args()
 
-bed_list = open(options.bed_list)
-ind_list = open(options.ind_list)
-out = open(options.out, 'w')
-pops = options.pops
+bed_list = open(args.bed_list)
+ind_list = open(args.ind_list)
+out = open(args.out, 'w')
+pops = args.pops
 out.write('ID\t' + '\t'.join(pops) + '\n')
 lai_props = [0]*len(pops)
 
