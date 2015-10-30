@@ -93,8 +93,10 @@ for pop in range(len(pops)):
                label=df.ix[df.index[df['FID'] == pops[pop]],0],
                s=20, c=colors[pop], marker=markers[pop], alpha=0.5, edgecolors=colors[pop])
     
-ax.set_xlabel(list(df.columns.values)[which_pcs[0]+2] + ' (' + "%.1f" % eval_per[which_pcs[0]+2] + '% var explained)', fontsize=14)
-ax.set_ylabel(list(df.columns.values)[which_pcs[1]+2] + ' (' + "%.1f" % eval_per[which_pcs[1]+2] + '% var explained)', fontsize=14)
+#ax.set_xlabel(list(df.columns.values)[which_pcs[0]+2] + ' (' + "%.1f" % eval_per[which_pcs[0]+2] + '% var explained)', fontsize=14)
+ax.set_xlabel(list(df.columns.values)[which_pcs[0]+2], fontsize=14)
+#ax.set_ylabel(list(df.columns.values)[which_pcs[1]+2] + ' (' + "%.1f" % eval_per[which_pcs[1]+2] + '% var explained)', fontsize=14)
+ax.set_ylabel(list(df.columns.values)[which_pcs[1]+2], fontsize=14)
 ax.set_title(args.title, fontsize=20)
 
 if not args.noGrid:
