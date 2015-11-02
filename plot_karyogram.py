@@ -18,7 +18,7 @@ parser.add_argument('--bed_b', required=True)
 parser.add_argument('--ind', default=None)
 parser.add_argument('--chrX', help='include chrX?', default=False, action="store_true")
 parser.add_argument('--centromeres', default='centromeres_hg19.bed')
-parser.add_argument('--pop_order', default=['AFR','EUR','NAT'], type=str, action='callback', callback=splitstr,
+parser.add_argument('--pop_order', default='AFR,EUR,NAT', 
                   help='comma-separated list of population labels in the order of rfmix populations (1 first, 2 second, and so on). Used in bed files and karyogram labels')
 parser.add_argument('--out')
 
@@ -116,7 +116,7 @@ def plot_rects(anc, chr, start, stop, hap, pop_order, colors, chrX):
 #read in bed files and get individual name
 bed_a = open(args.bed_a)
 bed_b = open(args.bed_b)
-pop_order = args.pop_order
+pop_order = args.pop_order.split(',')
 if args.ind is None:
     ind = '_'.join(args.bed_a.split('/')[-1].split('.')[0].split('_')[0:-1])
 else:
