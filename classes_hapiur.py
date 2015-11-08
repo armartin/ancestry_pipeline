@@ -21,7 +21,7 @@ def main(args):
     out = open(args.out, 'w')
     phind = open(args.phind)
     for line in phind:
-        line = line.strip().split(':')[1].rsplit('_', 1)[0]
+        line = line.strip().split()[0].split(':')[1].rsplit('_', 1)[0]
         ind_order.append(line)
         in_ref = 0
         for anc in range(len(ancs)):
