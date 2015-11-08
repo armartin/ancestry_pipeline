@@ -1,6 +1,7 @@
 #takes in a phind file output by hapiur and writes classes file
 import argparse
 import os
+import re
 
 def read_ref(anc):
     anc_set = set()
@@ -20,7 +21,7 @@ def main(args):
     out = open(args.out, 'w')
     phind = open(args.phind)
     for line in phind:
-        line = line.strip().split(':')[1].split('_')[0]
+        line = line.strip().split(':')[1].rsplit('_', 1)[0]
         ind_order.append(line)
         in_ref = 0
         for anc in range(len(ancs)):
