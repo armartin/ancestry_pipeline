@@ -1,4 +1,4 @@
-#takes in a sample file output by shapeit2rfmix and writes classes
+#takes in a phind file output by hapiur and writes classes file
 import argparse
 import os
 
@@ -6,7 +6,7 @@ def read_ref(anc):
     anc_set = set()
     anc = open(anc)
     for line in anc:
-        anc_set.add(line.strip().split()[1]) #split?
+        anc_set.add(line.strip()) #split?
     return(anc_set)
 
 def main(args):
@@ -18,9 +18,9 @@ def main(args):
     
     ind_order = []
     out = open(args.out, 'w')
-    sample = open(args.sample)
-    for line in sample:
-        line = line.strip()
+    phind = open(args.phind)
+    for line in phind:
+        line = line.strip().split(':')[0]
         ind_order.append(line)
         in_ref = 0
         for anc in range(len(ancs)):
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--ref', required=True)
-    parser.add_argument('--sample', required=True)
+    parser.add_argument('--phind', required=True)
     parser.add_argument('--out', required=True)
     
     args = parser.parse_args()
