@@ -27,10 +27,10 @@ def main(args):
         for anc in range(len(ancs)):
             in_ref = in_ref + int(line in ancs[anc])
             if line in ancs[anc]:
-                out.write(str(anc + 1) + ' ' + str(anc + 1) + ' ')
+                out.write(str(anc + 1) + ' ')
         print line + ': ' + str(in_ref)
         if in_ref == 0:
-            out.write('0 0 ')
+            out.write('0 ')
     out.write('\n')
     out.close()
 
