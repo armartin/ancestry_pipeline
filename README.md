@@ -4,7 +4,7 @@ Overall description: Run PCA on a VCF, phase data, convert phased data to RFMix 
 
 This repo gives information about how to run through phasing, local ancestry inference, generate collapsed bed files, plot karyograms, estimate global ancestry proportion from local ancestry proportions, generate and run ASPCA, and run TRACTS to model migration events, proportions, and timings.
 
-**Each step can be followed with the 1000 Genomes data (ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/supporting/hd_genotype_chip/) and systematically through this pipeline by downloading a toy dataset here: https://www.dropbox.com/sh/zbwka9u09f73gwo/AABc6FNl9fVBPjby8VQWzyeXa?dl=0**
+**Each step can be followed with the 1000 Genomes data (ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/supporting/hd_genotype_chip/) and systematically through this pipeline by downloading a toy dataset here: https://www.dropbox.com/sh/zbwka9u09f73gwo/AABc6FNl9fVBPjby8VQWzyeXa?dl=0. Slides from a tutorial I gave from ASHG 2015 using 1000 Genomes data is available here: http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20151008_ASHG15_tutorial/20151008_ASHG15_admixture.pdf.**
 
 ## Pipeline Map ##
 #### 0.) Phase #####
