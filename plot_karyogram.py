@@ -20,6 +20,7 @@ parser.add_argument('--chrX', help='include chrX?', default=False, action="store
 parser.add_argument('--centromeres', default='centromeres_hg19.bed')
 parser.add_argument('--pop_order', default='AFR,EUR,NAT', 
                   help='comma-separated list of population labels in the order of rfmix populations (1 first, 2 second, and so on). Used in bed files and karyogram labels')
+parser.add_argument('--colors', default=None)
 parser.add_argument('--out')
 
 args = parser.parse_args()
@@ -143,9 +144,19 @@ else:
   plt.yticks(range(1,23))
 
 #define colors
+def hex_to_rgb(value):
+    value = value.lstrip('#')
+    lv = len(value)
+    return tuple(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
+
 bmap = brewer2mpl.get_map('Set1', 'qualitative', 4)
-colors=bmap.mpl_colors
-colors.append((0,0,0))
+if args.colors is not None:
+  colors = []
+  color_list = args.colors.split(',')
+  [colors.append(x) for x in color_list]
+else:
+  colors=bmap.mpl_colors
+  colors.append((0,0,0))
 
 #define centromeres
 centro = open(args.centromeres)
