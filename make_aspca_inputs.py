@@ -24,9 +24,10 @@ def main(args):
     ind_class = {}
     
     keep = set()# get rid of this as requirement.
-    filtered = open_file(args.keep)#
-    for line in filtered:#
-        keep.add(line.strip())#
+    if args.keep is not None:
+        filtered = open_file(args.keep)#
+        for line in filtered:#
+            keep.add(line.strip())#
     
     ## get all admixed samples
     for line in sample:
@@ -41,7 +42,6 @@ def main(args):
         #    ind_class[line] = classes[i]
         i += 1
     
-    print keep#
     print ind_order#
     print ind_class
     
@@ -52,15 +52,11 @@ def main(args):
     out_adm.write('I\tid\t')
     vit_all = {}
     vit_prob = {}
-    for ind in ind_order:
-        if (ind.startswith('SA') and ind in ind_order) or not ind.startswith('SA'):## fix this
-            for hap in ['_A', '_B']:
-                vit_all[ind + hap] = []
-                vit_prob[ind + hap] = {}
-            if ind_class[ind] == '0':
-                out_adm.write(ind + '_A\t' + ind + '_B\t')
-            else:
-                out_anc.write(ind + '_A\t' + ind + '_B\t')
+    for ind in all_inds:
+        if ind_class[ind] == '0':
+            out_adm.write(ind + '_A\t' + ind + '_B\t')
+        else:
+            out_anc.write(ind + '_A\t' + ind + '_B\t')
     out_adm.write('\n')
     out_anc.write('\n')
     
@@ -154,7 +150,7 @@ if __name__ == '__main__':
     parser.add_argument('--classes', required=True)
     parser.add_argument('--out', required=True)
     
-    parser.add_argument('--fbk_threshold', default=0.99, type='float')
+    parser.add_argument('--fbk_threshold', default=0.99, type=float)
     parser.add_argument('--mono_class')
     parser.add_argument('--keep')
     
