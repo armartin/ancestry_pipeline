@@ -225,27 +225,44 @@ The ind_list input has individual IDs that will be used to summarize the output.
 Once the local ancestry output has been generated from RFMix, ASPCA input can be generated for example as follows:
 ```
 for i in {1..22}; do python make_aspca_inputs.py \
---alleles SA_550_Omni_CEU_LWK_SA_phase3_chr${i}.rfmix.allelesRephased5.txt \
---vit SA_550_Omni_CEU_LWK_SA_phase3_chr${i}.rfmix.5.Viterbi.txt \
---haps SA_550_Omni_CEU_LWK_SA_phase3_chr${i}.rfmix.5.map \
---sample SA_550_Omni_CEU_LWK_SA_phase3.sample \
---classes SA_550_Omni_CEU_LWK_SA_phase3.classes \
---out SA_550_Omni_CEU_LWK_SA_phase3_san_multi_chr${i}; done
+--alleles ACB_chr${i}.rfmix.allelesRephased1.txt \
+--vit ACB_chr${i}.rfmix.1.Viterbi.txt \
+--markers ACB_chr${i}.map \
+--inds ACB.sample \
+--classes ACB.classes \
+--out ACB_chr${i}; done
 ```
 There is currently a hard posterior threshold set. We have seen that this posterior thresholding can generate tighter clusters assuming a reasonably large number of markers are available.
-
-To do: 
-* This script could probably be made more flexible.
 
 #### Combine ASPCA input across chromosomes ####
 
 After this script is run, the input files need to be combined across chromosomes, for example as follows:
 ```
 python combine_aspca_chrs.py \
---aspca_prefix SA_550_Omni_CEU_LWK_SA_phase3_san_multi_chr \
---keep_anc HGDP_Schuster_ref.inds \
---anc san \
---out SA_550_Omni_CEU_LWK_SA_phase3_san
+--aspca_prefix ACB_chr \
+--anc EUR \
+--out ACB
+```
+
+## 2.3) Run ASPCA ##
+#### Run PCAMask ####
+
+After ASPCA input is generated, run PCAMask (https://sites.google.com/site/pcamask/dowload). Reading the manual and considering the question you're trying to ask are important here. You can then run PCAMask, for example as follows:
+```
+PCAmask_linux \
+-anc ACB_anc.beagle \
+-adm ACB_adm.beagle \
+-vit ACB.vit \
+-m ACB.markers \
+-o ACB.aspca \
+-mask 2```
+
+#### Orthogonalize PCs ####
+
+After running PCAMask, run PCA on the output to orthogonalize the results. You can use the simple_pca.py script (written by Chris Gignoux) to quickly run PCA on the output. For example:
+
+```
+python simple_pca.py ACB.aspca_2.pca.txt
 ```
 
 ## 3.1) Model migration timings with TRACTS ##
@@ -362,24 +379,3 @@ Python needs to import all these from the computer into the memory of python
 keep the name of admix_recomb and use "import tracts as admix_recomb"
 or 
 change all instances of "admix_recomb" by tracts
-
-## 3.2) Run ASPCA
-#### Run PCAMask
-
-After ASPCA input is generated, run PCAMask. Reading the manual and considering the question you're trying to ask are important here. You can then run PCAMask, for example as follows:
-```
-i=550_Omni; PCAmask_linux \
--anc SA_${i}_CEU_LWK_SA_phase3_san_san.beagle \
--adm SA_${i}_CEU_LWK_SA_phase3_san_adm.beagle \
--vit SA_${i}_CEU_LWK_SA_phase3_san.vit \
--m SA_${i}_CEU_LWK_SA_phase3_san.markers \
--o SA_${i}_CEU_LWK_SA_phase3_san_posterior99.aspca \
--mask 3
-```
-#### Orthogonalize PCs
-
-After running PCAMask, run PCA on the output to orthogonalize the results. You can use the simple_pca.py script (written by Chris Gignoux) to quickly run PCA on the output. For example:
-
-```
-python simple_pca.py SA_${i}_CEU_LWK_SA_phase3_san_posterior99.aspca_3.pca.txt
-```
