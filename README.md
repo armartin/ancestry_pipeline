@@ -255,7 +255,8 @@ PCAmask_linux \
 -vit ACB.vit \
 -m ACB.markers \
 -o ACB.aspca \
--mask 2```
+-mask 2
+```
 
 #### Orthogonalize PCs ####
 
