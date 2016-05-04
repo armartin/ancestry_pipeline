@@ -1,5 +1,7 @@
 __author__ = 'armartin'
 import argparse
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pylab
 from matplotlib.path import Path
@@ -7,6 +9,7 @@ import matplotlib.patches as patches
 import matplotlib.collections as mcol
 import brewer2mpl
 import os
+
 
 def splitstr(option, opt, value, parser):
   return(setattr(parser.values, option.dest, value.split(',')))
