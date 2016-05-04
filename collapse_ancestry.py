@@ -126,7 +126,6 @@ if __name__ == '__main__':
   for line in ind_info:
       myLine = line.strip().split()
       ind_list.append(myLine[0])
-  print ind_list
   try:
     ind_index = ind_list.index(current_ind)
   except ValueError:
