@@ -2,7 +2,6 @@ __author__ = 'armartin'
 import argparse
 import matplotlib
 matplotlib.use("Agg")
-matplotlib.rcParams['font.sans-serif'] = 'Arial'
 import matplotlib.pyplot as plt
 import pylab
 from matplotlib.path import Path
