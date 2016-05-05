@@ -27,13 +27,14 @@ This repo gives information about how to run through phasing, local ancestry inf
 * Make ASPCA input per chromosome
 * Combine ASPCA input across chromosomes
 
+##### 2.3) Run ASPCA #####
+* Run PCAMask
+* Orthogonalize PCs
+
 ##### 3.1) Model migration timings with TRACTS #####
 * Model migration timings with TRACTS
 * Helpful tips and tricks
 
-##### 3.2) Run ASPCA #####
-* Run PCAMask
-* Orthogonalize PCs
 
 ## 0.) Phase ###
 ##### Overview #####
