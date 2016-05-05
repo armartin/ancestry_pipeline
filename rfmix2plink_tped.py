@@ -13,11 +13,11 @@ def main(args):
     pop_labels = args.pop_labels.split(',')
     out_fam = []
     for pop in pop_labels:
-        out_fam.append(args.out + '_' + pop + '.tfam', 'w')
+        out_fam.append(open(args.out + '_' + pop + '.tfam', 'w'))
     
     out_tped = []
     for pop in pop_labels:
-        out_tped.append(args.out + '_' + pop + '.tped', 'w')
+        out_tped.append(open(args.out + '_' + pop + '.tped', 'w'))
     
     #go through every chromosome and population, printing tped along the way. counting number of tracts of each ancestry: G = absent, A = present
     for i in chrs:
