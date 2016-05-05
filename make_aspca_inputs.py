@@ -4,23 +4,48 @@ __author__ = 'armartin'
 import argparse
 import os
 import gzip
+from datetime import datetime
+import time
+
+def current_time():
+    return '[' + datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S') + ']'
 
 def open_file(filename):
+    """
+    Open files regardless of their gzip status
+    """
     if filename.endswith('gz'):
         my_file = gzip.open(filename)
     else:
         my_file = open(filename)
     return my_file
 
+def check_anc(anc): #TO DO: take in a number corresponding to the ancestral class of interest
+        sum_anc = 0
+        for i in range(2,len(anc)):
+            sum_anc += int(anc[i])
+        if sum_anc == (len(anc) - 2) or sum_anc == 0:
+            #print 'monomorphic'
+            #print anc
+            return False
+        else:
+            return True
+    
+def chunker(seq, size):
+    return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
+
+
 def main(args):
-    ## find admixed versus reference panel individuals
-    ind_order = []
+    """
+    find admixed versus reference panel individuals
+    write AS-phased output
+    """
+    ind_order = [] #this should probably consist of the keep file
     all_inds = []
-    sample = open_file(args.sample)
+    inds = open_file(args.inds)
     classes = open_file(args.classes)
     classes = classes.readline().strip().split()
     classes = classes[0::2] #get odds
-    i = 0
     ind_class = {}
     
     keep = set()# get rid of this as requirement.
@@ -29,8 +54,9 @@ def main(args):
         for line in filtered:#
             keep.add(line.strip())#
     
-    ## get all admixed samples
-    for line in sample:
+    ## get all admixed inds
+    i = 0
+    for line in inds:
         line = line.strip()
         all_inds.append(line)
         ind_class[line] = classes[i]
@@ -42,6 +68,7 @@ def main(args):
         #    ind_class[line] = classes[i]
         i += 1
     
+    ind_order = all_inds #fix this to allow for keep file
     print ind_order#
     print ind_class
     
@@ -57,32 +84,20 @@ def main(args):
             out_adm.write(ind + '_A\t' + ind + '_B\t')
         else:
             out_anc.write(ind + '_A\t' + ind + '_B\t')
+        vit_all[ind + '_A'] = []
+        vit_all[ind + '_B'] = []
     out_adm.write('\n')
     out_anc.write('\n')
     
-    def check_anc(anc): #TO DO: take in a number corresponding to the ancestral class of interest
-        sum_anc = 0
-        for i in range(2,len(anc)):
-            sum_anc += int(anc[i])
-        if sum_anc == (len(anc) - 2) or sum_anc == 0:
-            #print 'monomorphic'
-            #print anc
-            return False
-        else:
-            return True
-    
-    def chunker(seq, size):
-        return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
-    
     #write all markers that are not monomorphic in reference panel
-    haps = open_file(args.haps)
+    markers = open_file(args.markers)
     alleles = open_file(args.alleles)
     vit = open_file(args.vit)
     fbk = open_file(args.vit.replace('Viterbi.txt', 'ForwardBackward.txt'))
     out_vit = open(args.out + '.vit', 'w')
     out_markers = open(args.out + '.markers', 'w')
     marker_count = 0
-    for line in haps:
+    for line in markers:
         line = line.strip().split()
         markers = alleles.readline().strip().split()
         vit_line = vit.readline().strip().split()
@@ -145,8 +160,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--alleles', help='alleles file produced by RFMix', required=True)
     parser.add_argument('--vit', help='viterbi file produced by RFMix', required=True)
-    parser.add_argument('--haps', required=True)
-    parser.add_argument('--sample', required=True)
+    parser.add_argument('--markers', required=True)
+    parser.add_argument('--inds', required=True)
     parser.add_argument('--classes', required=True)
     parser.add_argument('--out', required=True)
     
