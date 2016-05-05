@@ -30,7 +30,7 @@ def main(args):
                 out.write(' '.join([i, snp_line[2], snp_line[1], snp_line[0]]) + ' ')
             for j in range(len(rf_line)/2):
                 current_anc = [rf_line[2*j], rf_line[2*j+1]]
-                for pop in range(pop_labels):
+                for pop in range(len(pop_labels)):
                     pop_count = current_anc.count(str(pop+1))
                     if pop_count == 0:
                         out_tped[pop].write('G G ')
@@ -38,10 +38,10 @@ def main(args):
                         out_tped[pop].write('G A ')
                     else:
                         out_tped[pop].write('A A ')
-            for pop in range(pop_labels):
+            for pop in range(len(pop_labels)):
                 out_tped[pop].write('\n')
 
-    for pop in range(pop_labels):
+    for pop in range(len(pop_labels)):
         out_tped[pop].close()
     
 if __name__ == '__main__':
