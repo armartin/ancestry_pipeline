@@ -21,8 +21,8 @@ def main(args):
     
     #go through every chromosome and population, printing tped along the way. counting number of tracts of each ancestry: G = absent, A = present
     for i in chrs:
-        rfmix = open(re.sub(r'chr[X0-9]+', 'chr' + str(chr), args.rfmix))
-        snp_map = open(re.sub(r'chr[X0-9]+', 'chr' + str(chr), args.snp_map))
+        rfmix = open(re.sub(r'chr[X0-9]+', 'chr' + str(i), args.rfmix))
+        snp_map = open(re.sub(r'chr[X0-9]+', 'chr' + str(i), args.snp_map))
         for line in snp_map:
             rf_line = rfmix.readline().strip().split()
             snp_line = line.strip().split()
