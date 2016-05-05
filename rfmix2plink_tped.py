@@ -5,7 +5,7 @@ import re
 
 def main(args):
     chrs = map(str, range(1,23))
-    inds = open(args.inds)
+    inds = open(args.fam)
     ind_order = []
     for ind in inds:
         ind_order.append(ind.strip())
