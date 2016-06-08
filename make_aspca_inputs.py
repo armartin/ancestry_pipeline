@@ -21,15 +21,17 @@ def open_file(filename):
     return my_file
 
 def check_anc(anc): #TO DO: take in a number corresponding to the ancestral class of interest
-        sum_anc = 0
-        for i in range(2,len(anc)):
-            sum_anc += int(anc[i])
-        if sum_anc == (len(anc) - 2) or sum_anc == 0:
-            #print 'monomorphic'
-            #print anc
-            return False
-        else:
-            return True
+    sum_anc = 0
+    for i in range(2,len(anc)):
+        sum_anc += int(anc[i])
+    #print sum_anc
+    #print len(anc) - 2
+    if sum_anc == 0 or sum_anc == (len(anc) - 2): #check len(keep)
+        print str(sum_anc) + ': monomorphic'
+        #print anc
+        return False
+    else:
+        return True
     
 def chunker(seq, size):
     return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
@@ -40,7 +42,7 @@ def main(args):
     find admixed versus reference panel individuals
     write AS-phased output
     """
-    ind_order = [] #this should probably consist of the keep file
+    ind_order = [] #reference samples in order to keep
     all_inds = []
     inds = open_file(args.inds)
     classes = open_file(args.classes)
@@ -48,11 +50,11 @@ def main(args):
     classes = classes[0::2] #get odds
     ind_class = {}
     
-    keep = set()# get rid of this as requirement.
+    keep = set()
     if args.keep is not None:
-        filtered = open_file(args.keep)#
-        for line in filtered:#
-            keep.add(line.strip())#
+        filtered = open_file(args.keep)
+        for line in filtered:
+            keep.add(line.strip())
     
     ## get all admixed inds
     i = 0
@@ -60,17 +62,17 @@ def main(args):
         line = line.strip()
         all_inds.append(line)
         ind_class[line] = classes[i]
-        #if (line.startswith('SA') and line in keep) or not line.startswith('SA'):#this might mess up a lot of things
-        #    ind_order.append(line)
-        #if classes[i] == '3' and line.startswith('SA'):
-        #    ind_class[line] = '0'
-        #else:
-        #    ind_class[line] = classes[i]
         i += 1
     
-    ind_order = all_inds #fix this to allow for keep file
-    print ind_order#
-    print ind_class
+    ind_order = []
+    if len(keep) == 0:
+        ind_order = all_inds #fix this to allow for keep file
+    else:
+        for ind in all_inds:
+            if ind in keep:
+                ind_order.append(ind)
+    #print ind_order#
+    #print ind_class
     
     ## write beagle header files for admixed and ancestral beagle files
     out_anc = open(args.out + '_anc.beagle', 'w')
@@ -82,8 +84,12 @@ def main(args):
     for ind in all_inds:
         if ind_class[ind] == '0':
             out_adm.write(ind + '_A\t' + ind + '_B\t')
+            ind_order.append(ind) #add admixed samples to ind_order
         else:
-            out_anc.write(ind + '_A\t' + ind + '_B\t')
+            if len(keep) == 0:
+                out_anc.write(ind + '_A\t' + ind + '_B\t')
+            elif ind in keep:
+                out_anc.write(ind + '_A\t' + ind + '_B\t')
         vit_all[ind + '_A'] = []
         vit_all[ind + '_B'] = []
     out_adm.write('\n')
@@ -113,23 +119,18 @@ def main(args):
         i=0
         #print markers[0]
         #print vit_line
-        anc_mono = []
         for ind in all_inds: #this would be a problem because indexing is off
-            if ind in ind_order:
-                if ind_class[ind] == '0':
+            if ind_class[ind] == '0':
                 #if ind_class[ind] == '0' and ind in keep:
-                    adm.append(markers[0][i])
-                    adm.append(markers[0][i+1])
-                else:
+                adm.append(markers[0][i])
+                adm.append(markers[0][i+1])
+            elif ind in ind_order:
                 #elif ind.startswith('SA') and ind in keep:
-                    anc.append(markers[0][i])
-                    anc.append(markers[0][i+1])
-                    if args.mono_class is not None and ind_class[ind] == args.mono_class:
-                        anc_mono.append(markers[0][i])
-                        anc_mono.append(markers[0][i+1])
+                anc.append(markers[0][i])
+                anc.append(markers[0][i+1])
             i += 2
         i=0
-        multimorphic = (check_anc(anc_mono) if anc_mono != [] else check_anc(anc))
+        multimorphic = check_anc(anc)
         if multimorphic: #by default, check all for monomorphic, alternative, check subset for monomorphic
             for ind in all_inds:
                 if ind in ind_order:
@@ -166,7 +167,6 @@ if __name__ == '__main__':
     parser.add_argument('--out', required=True)
     
     parser.add_argument('--fbk_threshold', default=0.99, type=float)
-    parser.add_argument('--mono_class')
     parser.add_argument('--keep')
     
     args = parser.parse_args()
