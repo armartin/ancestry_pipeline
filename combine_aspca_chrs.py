@@ -61,8 +61,8 @@ def main(args):
         marker_indices = []
         for line in current_anc:
             line = line.strip().split()
-            if args.extract is not None and line[1] in extract:
-                marker_indices.extned([count_marker, count_marker + 1])
+            if args.extract is not None and line[1] in keep_snps or args.extract is None:
+                marker_indices.extend([count_marker, count_marker + 1])
                 if len(keep_inds) > 1:
                     i = 0
                     for hap in line:
@@ -75,19 +75,19 @@ def main(args):
             count_marker += 2
         for line in current_adm:
             line = line.strip().split()
-            if args.extract is not None and line[1] in extract:
+            if args.extract is not None and line[1] in keep_snps or args.extract is None:
                 out_adm.write(' '.join(line) + '\n')
         current_vit = open(args.aspca_prefix + chr + '.vit')
         for line in current_vit: #check if there are markers to extract
             line = line.strip().split()
             if args.extract is not None:
-                vit_dict[line[0]].extend([line[x] for x in current_markers])
+                vit_dict[line[0]].extend([line[x] for x in marker_indices])
             else:
                 vit_dict[line[0]].extend(line[1:len(line)])
         current_markers = open(args.aspca_prefix + chr + '.markers')
         for line in current_markers: #might need to recheck if monomorphic
             line = line.strip().split()
-            if args.extract is not None and line[1] in extract:
+            if args.extract is not None and line[1] in keep_snps or args.extract is None:
                 out_markers.write('window' + str(window_count) + '\t' + line[1] + '\n')
                 window_count += 1
     
