@@ -107,7 +107,7 @@ def simulate_ooa(population_configurations, migration_matrix, demographic_events
     eprint('Ending simulations' + current_time())
     return(simulation)
 
-def compute_prs(simulation, ncausal, h2, nhaps, out):
+def true_prs(simulation, ncausal, h2, nhaps, out):
     """
     choose some number of causal alleles
     assign these alleles effect sizes
@@ -121,7 +121,7 @@ def compute_prs(simulation, ncausal, h2, nhaps, out):
     # go through each population's trees
     out_sites = gzip.open(out + '_nhaps_' + '_'.join(map(str, nhaps)) + '_h2_' + str(round(h2, 2)) + '_m_' + str(ncausal) + '.sites.gz', 'w')
     out_sites.write('\t'.join(['Index', 'Pos', 'AFR_count', 'EUR_count', 'EAS_count', 'Total', 'beta']) + '\n')
-    mut_info = {}
+    mut_info = {} # index -> position, afr count, eur count, eas count
     pop_count = 0
     for pop_leaves in [simulation.get_samples(population_id=0), simulation.get_samples(population_id=1), simulation.get_samples(population_id=2)]:
         for tree in simulation.trees(tracked_leaves=pop_leaves):
@@ -142,15 +142,14 @@ def compute_prs(simulation, ncausal, h2, nhaps, out):
     for mutation in causal_mutations:
         out_sites.write(str(mutation.index) + '\t' + '\t'.join(map(str, mut_info[mutation.index])) + '\t' + str(simulation.get_sample_size()) + '\t')
         out_sites.write(str(causal_effects[mutation.index]) + '\n')
-        #
     out_sites.close()
     
     prs_haps = np.zeros(sum(nhaps)) #score for each haplotype
     eprint('Computing true PRS' + current_time())
-    for variant in tqdm(simulation.variants(), total=simulation.get_num_mutations()): #pos, variant
+    for variant in tqdm(simulation.variants(), total=simulation.get_num_mutations()):
         if variant.index in causal_mut_index:
-            prs_haps += variant.genotypes * causal_effects[variant.index] # mean center variants w global frequencies?
-    prs_true = prs_haps[0::2] + prs_haps[1::2]
+            prs_haps += variant.genotypes * causal_effects[variant.index] # multiply vector of genotypes by beta for given variant
+    prs_true = prs_haps[0::2] + prs_haps[1::2] #add to get individuals
     return(prs_true)
     
 def case_control(prs_true, h2, nhaps, prevalence, ncontrols, out):
@@ -160,7 +159,7 @@ def case_control(prs_true, h2, nhaps, prevalence, ncontrols, out):
     """
     eprint('Defining cases/controls' + current_time())
     env_effect = np.random.normal(loc=0,scale=1-h2, size=sum(nhaps)/2)
-    prs_norm = (prs_true - np.mean(prs_true)) / np.std(prs_true) # mean: allele frequency # sd: pq/2N - from the binomial assumes diploid. just N because haploid seqs
+    prs_norm = (prs_true - np.mean(prs_true)) / np.std(prs_true)
     env_norm = (env_effect - np.mean(env_effect)) / np.std(env_effect)
     total_liability = math.sqrt(h2) * prs_norm + math.sqrt(1 - h2) * env_norm
     eur_liability = total_liability[nhaps[0]/2:(nhaps[0]+nhaps[1])/2]
@@ -176,13 +175,13 @@ def case_control(prs_true, h2, nhaps, prevalence, ncontrols, out):
     
     return(case_ids, control_ids, prs_norm, env_norm)
 
-def run_gwas(simulation, diploid_cases, diploid_controls, p_threshold):
+def run_gwas(simulation, diploid_cases, diploid_controls, p_threshold, cc_maf):
     """
     use cases and controls to compute OR, log(OR), and p-value for every variant
     """
     eprint('Running GWAS (' + str(len(diploid_cases)) + ' cases, ' + str(len(diploid_controls)) + ' controls)' + current_time())
-    summary_stats = {} # index -> position, OR, p-value
-    case_control = {} # index -> ncases w mut, ncontrols w mut, position
+    summary_stats = {} # position -> OR, p-value
+    case_control = {} # position -> ncases w mut, ncontrols w mut
     
     cases = [2*x for x in diploid_cases] + [2*x+1 for x in diploid_cases]
     controls = [2*x for x in diploid_controls] + [2*x+1 for x in diploid_controls]
@@ -190,29 +189,29 @@ def run_gwas(simulation, diploid_cases, diploid_controls, p_threshold):
     eprint('Counting case mutations' + current_time())
     for tree in simulation.trees(tracked_leaves=cases):
         for mutation in tree.mutations():
-            case_control[mutation.index] = [tree.get_num_tracked_leaves(mutation.node)]
+            case_control[mutation.position] = [tree.get_num_tracked_leaves(mutation.node)]
             
     eprint('Counting control mutations' + current_time())
     for tree in simulation.trees(tracked_leaves=controls):
         for mutation in tree.mutations():
-            case_control[mutation.index].append(tree.get_num_tracked_leaves(mutation.node))
-            case_control[mutation.index].append(mutation.position)
+            case_control[mutation.position].append(tree.get_num_tracked_leaves(mutation.node))
+            #case_control[mutation.position].append(mutation.position)
     
     # only keep sites with non-infinite or nan effect size with case and control maf > .01
     num_var = 0
     eprint('Computing fisher\'s exact test' + current_time())
     num_controls = float(len(controls))
     num_cases = float(len(cases))
-    for index in tqdm(case_control):
-        case_maf = min(case_control[index][0]/num_cases, (num_cases - case_control[index][0])/num_cases)
-        control_maf = min(case_control[index][1]/num_controls, (num_controls - case_control[index][1])/num_controls)
-        case_control_maf = min((case_control[index][0]+case_control[index][1])/(num_cases+num_controls), (num_cases + num_controls - case_control[index][0] - case_control[index][1])/(num_cases + num_controls))
-        if case_control_maf > 0.01: ####MAKE THIS A VARIABLE
-            contingency = [[case_control[index][0], num_controls - case_control[index][0]],
-                [case_control[index][1], num_controls - case_control[index][1]]]
-            fisher = stats.fisher_exact(contingency) #OR, p-value
-            if not np.isnan(fisher[0]) and not np.isinf(fisher[0]) and fisher[1] <= p_threshold:
-                summary_stats[index] = (case_control[index][2],) + fisher
+    for position in tqdm(case_control):
+        case_maf = min(case_control[position][0]/num_cases, (num_cases - case_control[position][0])/num_cases)
+        control_maf = min(case_control[position][1]/num_controls, (num_controls - case_control[position][1])/num_controls)
+        case_control_maf = min((case_control[position][0]+case_control[position][1])/(num_cases+num_controls), (num_cases + num_controls - case_control[position][0] - case_control[position][1])/(num_cases + num_controls))
+        if case_control_maf > cc_maf:
+            contingency = [[case_control[position][0], num_controls - case_control[position][0]],
+                [case_control[position][1], num_controls - case_control[position][1]]]
+            (OR, p) = stats.fisher_exact(contingency) #OR, p-value
+            if not np.isnan(OR) and not np.isinf(OR) and OR != 0 and p <= p_threshold:
+                summary_stats[position] = [OR, p]
                 num_var += 1
                 #if not num_var % 100: #remove this eventually
                 #    break
@@ -230,48 +229,83 @@ def clump_variants(simulation, summary_stats, nhaps, r2_threshold, window_size):
     """
     # make a list of SNPs ordered by p-value
     eprint('Subsetting variants to usable list' + current_time())
-    usable_variants = {}
+    usable_positions = {} # position -> variant (simulation indices)
     
+    sim_pos_index = {}
     for variant in tqdm(simulation.variants(), total=simulation.get_num_mutations()):
-        if variant.index in summary_stats:
-            usable_variants[variant.index] = variant
+        if variant.position in summary_stats:
+            usable_positions[variant.position] = variant
+            sim_pos_index[variant.position] = variant.index
     
     # order all snps by p-value
-    ordered_index = sorted(summary_stats.keys(), key=lambda x: summary_stats[x][-1])
-    ordered_positions = [summary_stats[x][0] for x in ordered_index]
+    ordered_positions = sorted(summary_stats.keys(), key=lambda x: summary_stats[x][-1])
+    #[(x, (x in usable_positions.keys())) for x in ordered_positions]
     
-    ld_calc = msprime.LdCalculator(simulation) #note: this is accessed with index. Need summary_stats to be indexed this way.
+    eur_subset = simulation.subset(range(nhaps[0], (nhaps[0]+nhaps[1])))
+    eur_index_pos = {}
+    eur_pos_index = {}
+    for mutation in tqdm(eur_subset.mutations(), total=eur_subset.get_num_mutations()):
+        eur_index_pos[mutation.index] = mutation.position
+        eur_pos_index[mutation.position] = mutation.index
+    ordered_eur_index = sorted(eur_index_pos.keys())
+    ld_calc = msprime.LdCalculator(eur_subset)
+    #ld_calc = msprime.LdCalculator(simulation)
     
-    #compute LD and prune in order of significance
-    for index in ordered_index:
-        if index in usable_variants:
-            r2_forward = ld_calc.get_r2_array(index, direction=msprime.FORWARD, max_distance=125e3)
-            r2_reverse = ld_calc.get_r2_array(index, direction=msprime.REVERSE, max_distance=125e3)
+    # compute LD and prune in order of significance (popping index of SNPs)
+    for position in ordered_positions:
+        if position in usable_positions:
+            r2_forward = ld_calc.get_r2_array(eur_pos_index[position], direction=msprime.FORWARD, max_distance=125e3)
+            #print([position, np.where(r2_forward > r2_threshold)[0], np.where(r2_reverse > r2_threshold)[0]])
+            for i in np.where(r2_forward > r2_threshold)[0]:
+                usable_positions.pop(eur_index_pos[eur_pos_index[position]+i+1], None) #identify next position in eur space
+            r2_reverse = ld_calc.get_r2_array(eur_pos_index[position], direction=msprime.REVERSE, max_distance=125e3)
             for i in np.where(r2_reverse > r2_threshold)[0]:
-                usable_variants.pop(index+i+1, None)
-            for i in np.where(r2_reverse < r2_threshold)[0]:
-                usable_variants.pop(index-i-1, None)
+                usable_positions.pop(eur_index_pos[eur_pos_index[position]-i-1], None)
     
-    clumped_snps = set(usable_variants.keys())
+    clumped_snps = set(usable_positions.keys())
     
-    eprint('Starting SNPs: ' + str(len(ordered_index)) + '; SNPs after clumping: ' + str(len(clumped_snps)) + current_time())
-    
-    return(clumped_snps, usable_variants)
+    eprint('Starting SNPs: ' + str(len(ordered_positions)) + '; SNPs after clumping: ' + str(len(clumped_snps)) + current_time())
+
+    return(clumped_snps, usable_positions)
     
 
-def infer_prs(simulation, nhaps, clumped_snps, summary_stats, usable_variants):
+def infer_prs(simulation, nhaps, clumped_snps, summary_stats, usable_positions, h2, ncausal, out):
     """
     use clumped variants from biased gwas to compute inferred prs for everyone
     """
     eprint('Computing inferred PRS' + current_time())
     prs_haps = np.zeros(sum(nhaps))
-    for index in usable_variants:
-        variant = usable_variants[index]
-        if summary_stats[index][1] > 0:
+    for variant in tqdm(simulation.variants(), total=simulation.get_num_mutations()):
+        if variant.position in usable_positions:
             for ind in range(simulation.get_sample_size()):
-                prs_haps[ind] += int(variant.genotypes[ind]) * math.log(summary_stats[index][1])
+                prs_haps[ind] += int(variant.genotypes[ind]) * math.log(summary_stats[variant.position][0])
     
     prs_infer = prs_haps[0::2] + prs_haps[1::2]
+    
+    # go through each population's trees
+    out_sites = gzip.open(out + '_nhaps_' + '_'.join(map(str, nhaps)) + '_h2_' + str(round(h2, 2)) + '_m_' + str(ncausal) + '.infer_sites.gz', 'w')
+    out_sites.write('\t'.join(['Index', 'Pos', 'AFR_count', 'EUR_count', 'EAS_count', 'Total', 'beta']) + '\n')
+    mut_info = {}
+    causal_mutations = set()
+    pop_count = 0
+    for pop_leaves in [simulation.get_samples(population_id=0), simulation.get_samples(population_id=1), simulation.get_samples(population_id=2)]:
+        for tree in simulation.trees(tracked_leaves=pop_leaves):
+            for mutation in tree.mutations():
+                if mutation.position in usable_positions:
+                    causal_mutations.add(mutation)
+                    if pop_count == 0:
+                        mut_info[mutation.index] = [mutation.position, tree.get_num_tracked_leaves(mutation.node)]
+                    else:
+                        mut_info[mutation.index].append(tree.get_num_tracked_leaves(mutation.node))
+        pop_count += 1
+    
+    eprint('Writing all site info' + current_time())
+    for mutation in causal_mutations:
+        out_sites.write(str(mutation.index) + '\t' + '\t'.join(map(str, mut_info[mutation.index])) + '\t' + str(simulation.get_sample_size()) + '\t')
+        out_sites.write(str(summary_stats[mutation.position][0]) + '\n')
+        #
+    out_sites.close()
+    
     return(prs_infer)
     
 def write_summaries(out, prs_true, prs_infer, nhaps, cases, controls, h2, ncausal, environment):
@@ -293,7 +327,7 @@ def write_summaries(out, prs_true, prs_infer, nhaps, cases, controls, h2, ncausa
             pop = 'EUR'
         else:
             pop = 'EAS'
-        out_prs.write('\t'.join(map(str, [ind+1, pop, scaled_prs[ind], prs_infer[ind], pheno, scaled_env[ind]])) + '\n')
+        out_prs.write('\t'.join(map(str, [ind+1, pop, prs_true[ind], prs_infer[ind], pheno, scaled_env[ind]])) + '\n')
     out_prs.close()
         
 def main(args):
@@ -316,11 +350,11 @@ def main(args):
     eprint('Sequence length: ' + str(simulation.get_sequence_length()))
 
     
-    prs_true = compute_prs(simulation, args.ncausal, args.h2, nhaps, args.out)
+    prs_true = true_prs(simulation, args.ncausal, args.h2, nhaps, args.out)
     cases_diploid, controls_diploid, prs_norm, environment = case_control(prs_true, args.h2, nhaps, args.prevalence, args.ncontrols, args.out)
-    summary_stats, cases_haploid, controls_haploid = run_gwas(simulation, cases_diploid, controls_diploid, args.p_threshold)
-    clumped_snps, usable_variants = clump_variants(simulation, summary_stats, nhaps, args.r2, args.window_size)
-    prs_infer = infer_prs(simulation, nhaps, clumped_snps, summary_stats, usable_variants)
+    summary_stats, cases_haploid, controls_haploid = run_gwas(simulation, cases_diploid, controls_diploid, args.p_threshold, args.cc_maf)
+    clumped_snps, usable_positions = clump_variants(simulation, summary_stats, nhaps, args.r2, args.window_size)
+    prs_infer = infer_prs(simulation, nhaps, clumped_snps, summary_stats, usable_positions, args.h2, args.ncausal, args.out)
     write_summaries(args.out, prs_true, prs_infer, nhaps, cases_diploid, controls_diploid, args.h2, args.ncausal, environment)
     
     #print summary_stats
@@ -336,6 +370,7 @@ if __name__ == '__main__':
     parser.add_argument('--h2', type=float, default=float(2)/3)
     parser.add_argument('--prevalence', type=float, default=0.05)
     parser.add_argument('--p_threshold', type=float, default=0.01)
+    parser.add_argument('--cc_maf', type=float, default=0.01)
     parser.add_argument('--r2', type=float, default=0.5)
     parser.add_argument('--window_size', type=int, default=250e3)
     parser.add_argument('--out', default='/Users/alicia/rare/chip_design/prs/simulations/sim0')
