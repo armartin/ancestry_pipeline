@@ -37,7 +37,7 @@ def check_gt_posterior(fbk_max, fbk_threshold, index, add, hap_anc, line, curren
       current_anc[add] = -9
   return (current_anc, hap_anc)
   
-def find_haplotype_bounds(index, add, pop_order, hap):
+def find_haplotype_bounds(index, add, pop_order, hap,npop):
   for chr in chrs:
     print str(chr) + ' [' + datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S') + ']'
     rfmix = open(re.sub(r'chr[X0-9]+', 'chr' + str(chr), args.rfmix))
@@ -63,7 +63,7 @@ def find_haplotype_bounds(index, add, pop_order, hap):
         fbk_line = fbk.readline().strip().split()
         fbk_line = map(float, fbk_line)
         fbk_max = []
-        for i in grouper(3, fbk_line):
+        for i in grouper(npop, fbk_line):
           fbk_max.append(max(i))
         if fbk_max[index*2+add] < args.fbk_threshold:
           myLine[index*2+add] = -9
@@ -106,16 +106,17 @@ def main(current_ind, index, pop_order):
   hap_a = open(args.out + '_A.bed', 'w')
   hap_b = open(args.out + '_B.bed', 'w')
   
-  find_haplotype_bounds(index, 0, pop_order, hap_a)
+  find_haplotype_bounds(index, 0, pop_order, hap_a,npop)
   hap_a.close()
   
-  find_haplotype_bounds(index, 1, pop_order, hap_b)
+  find_haplotype_bounds(index, 1, pop_order, hap_b,npop)
   hap_b.close()    
 
 if __name__ == '__main__':
   #load parameters and files
   args = parse_args()
   pop_labels = args.pop_labels.split(',')
+  npop = len(pop_labels)
   ind_info = open(args.ind_info)
   if args.ind is None:
     raise Exception('individual not set')
