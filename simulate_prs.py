@@ -207,7 +207,7 @@ def run_gwas(simulation, diploid_cases, diploid_controls, p_threshold, cc_maf):
         control_maf = min(case_control[position][1]/num_controls, (num_controls - case_control[position][1])/num_controls)
         case_control_maf = min((case_control[position][0]+case_control[position][1])/(num_cases+num_controls), (num_cases + num_controls - case_control[position][0] - case_control[position][1])/(num_cases + num_controls))
         if case_control_maf > cc_maf:
-            contingency = [[case_control[position][0], num_controls - case_control[position][0]],
+            contingency = [[case_control[position][0], num_cases - case_control[position][0]],
                 [case_control[position][1], num_controls - case_control[position][1]]]
             (OR, p) = stats.fisher_exact(contingency) #OR, p-value
             if not np.isnan(OR) and not np.isinf(OR) and OR != 0 and p <= p_threshold:
