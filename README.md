@@ -6,6 +6,11 @@ This repo gives information about how to run through phasing, local ancestry inf
 
 **Each step can be followed with the 1000 Genomes data (ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/supporting/hd_genotype_chip/) and systematically through this pipeline by downloading a toy dataset here: https://www.dropbox.com/sh/zbwka9u09f73gwo/AABc6FNl9fVBPjby8VQWzyeXa?dl=0. Slides from a tutorial I gave from ASHG 2015 using 1000 Genomes data are available here: http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20151008_ASHG15_tutorial/20151008_ASHG15_admixture.pdf.**
 
+If you use these tools or the GWAS simulation framework set up here, please cite:
+
+Martin, et al. Human demographic history impacts genetic risk prediction across diverse populations. bioRxiv, 2016.
+
+
 ## Pipeline Map ##
 #### 0.) Phase #####
 * Overview
