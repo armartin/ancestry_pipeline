@@ -10,7 +10,7 @@ Each step can be followed with the 1000 Genomes data (ftp://ftp-trace.ncbi.nih.g
 
 If you use these tools or the GWAS simulation framework set up here, please cite:
 
-Martin, et al. Human demographic history impacts genetic risk prediction across diverse populations. bioRxiv, 2016.
+Martin, et al. Human demographic history impacts genetic risk prediction across diverse populations. AJHG, 2017. (http://www.cell.com/ajhg/abstract/S0002-9297(17)30107-6)
 
 
 ## Pipeline Map ##
