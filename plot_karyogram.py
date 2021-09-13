@@ -82,20 +82,20 @@ def plot_rects(anc, chr, start, stop, hap, pop_order, colors, chrX):
         ]
         clip_mask = Path(vertices=mask, codes=mask_codes)
         
-    if hap == 'A': #bed_a ancestry goes on top
+    if hap == 'A': #bed_a ancestry goes on top (smaller y values)
         verts = [
             (float(start), chr), #left, bottom
-            (float(start), chr + 0.4), #left, top
-            (float(stop), chr + 0.4), #right, top
+            (float(start), chr - 0.4), #left, top
+            (float(stop), chr - 0.4), #right, top
             (float(stop), chr), #right, bottom
             (0, 0), #ignored
         ]
-    else: #bed_b ancestry goes on bottom
+    else: #bed_b ancestry goes on bottom (larger y values)
         verts = [
-            (float(start), chr - 0.4), #left, bottom
+            (float(start), chr + 0.4), #left, bottom
             (float(start), chr), #left, top
             (float(stop), chr), #right, top
-            (float(stop), chr - 0.4), #right, bottom
+            (float(stop), chr + 0.4), #right, bottom
             (0, 0), #ignored
         ]
 
